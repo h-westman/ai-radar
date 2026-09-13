@@ -1,0 +1,28 @@
+# Brainstorming companion mockups
+.superpowers/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Node / frontend
+node_modules/
+dist/
+playwright-report/
+test-results/
+
+# Build output copied into the backend for deployment
+backend/app/static/
+
+# Local config
+.env
+.env.*
+!.env.example
