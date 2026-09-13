@@ -111,6 +111,7 @@ All tables use integer identity primary keys. Timestamps are `timestamptz` store
   - the end of each period in UTC (Sunday 23:59:59 for weeks, the last day of the month at 23:59:59 for months), from the period containing `from` to the period containing `to`,
   - with the last frame replaced by *now* when `to` is today.
 - The default range runs from the earliest `effective_at` in the scope to now, with a monthly step.
+- For a **team** scope, the default range always covers at least the last 12 months, so a new team has past months to backdate into during its first session.
 
 **Backdated edits**
 - A move made while the timeline is unlocked at frame date F is saved with `effective_at = F` and `recorded_at = now`.
