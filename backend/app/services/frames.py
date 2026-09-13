@@ -1,6 +1,6 @@
 """Pure position and aggregation rules (spec §3). No database access here."""
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from typing import Literal
@@ -86,3 +86,71 @@ def latest_as_of(
         if current is None or _order(p) > _order(current):
             latest[key] = p
     return latest
+
+
+def _round(x: float) -> int:
+    return int(x + 0.5)
+
+
+def active_team_ids(
+    teams: Iterable[TeamRow], placements: Sequence[PlacementRow], at: datetime
+) -> set[int]:
+    started = {p.team_id for p in placements if p.effective_at <= at}
+    return {
+        t.id for t in teams if t.id in started and (t.archived_at is None or t.archived_at > at)
+    }
+
+
+def team_frame(
+    team_id: int, placements: Sequence[PlacementRow], practice_ids: set[int], at: datetime
+) -> list[Point]:
+    latest = latest_as_of((p for p in placements if p.team_id == team_id), at)
+    points = [
+        Point(practice_id=p.practice_id, adoption=p.adoption, value=p.value, teams=1)
+        for p in latest.values()
+        if not p.removed and p.practice_id in practice_ids
+    ]
+    return sorted(points, key=lambda point: point.practice_id)
+
+
+def org_frame(
+    teams: Sequence[TeamRow],
+    placements: Sequence[PlacementRow],
+    practice_ids: set[int],
+    at: datetime,
+) -> list[Point]:
+    active = active_team_ids(teams, placements, at)
+    if not active:
+        return []
+    latest = latest_as_of((p for p in placements if p.team_id in active), at)
+    by_practice: dict[int, list[PlacementRow]] = {}
+    for p in latest.values():
+        if not p.removed and p.practice_id in practice_ids:
+            by_practice.setdefault(p.practice_id, []).append(p)
+
+    points: list[Point] = []
+    for practice_id in sorted(by_practice):
+        rows = sorted(by_practice[practice_id], key=lambda r: r.team_id)
+        points.append(
+            Point(
+                practice_id=practice_id,
+                adoption=_round(sum(r.adoption for r in rows) / len(active)),
+                value=_round(sum(r.value for r in rows) / len(rows)),
+                teams=len(rows),
+                team_positions=tuple(TeamPosition(r.team_id, r.adoption, r.value) for r in rows),
+            )
+        )
+    return points
+
+
+def build_frames(
+    *,
+    scope_team_id: int | None,
+    teams: Sequence[TeamRow],
+    placements: Sequence[PlacementRow],
+    practice_ids: set[int],
+    dates: list[datetime],
+) -> list[Frame]:
+    if scope_team_id is None:
+        return [Frame(d, org_frame(teams, placements, practice_ids, d)) for d in dates]
+    return [Frame(d, team_frame(scope_team_id, placements, practice_ids, d)) for d in dates]
