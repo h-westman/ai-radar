@@ -47,3 +47,17 @@ def make_placement(
     session.add(placement)
     session.flush()
     return placement
+
+
+from sqlalchemy import select  # noqa: E402
+
+from app.models import Revision  # noqa: E402
+
+
+def revisions_for(session: Session, entity_type: str, entity_id) -> list[Revision]:
+    stmt = (
+        select(Revision)
+        .where(Revision.entity_type == entity_type, Revision.entity_id == str(entity_id))
+        .order_by(Revision.id)
+    )
+    return list(session.scalars(stmt))

@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 
-from app.routers import health
+from app.errors import ConflictError, conflict_handler
+from app.routers import health, teams
 
 
 def create_app() -> FastAPI:
     app = FastAPI(title="AI Radar")
-    app.include_router(health.router, prefix="/api")
+    app.add_exception_handler(ConflictError, conflict_handler)
+    for router in (health.router, teams.router):
+        app.include_router(router, prefix="/api")
     return app
 
 
