@@ -41,7 +41,11 @@ export default function TeamsPage() {
 
   async function toggleArchived(t: Team) {
     await ensureName()
-    await setArchived.mutateAsync({ id: t.id, archived: t.archived_at === null })
+    try {
+      await setArchived.mutateAsync({ id: t.id, archived: t.archived_at === null })
+    } catch (err) {
+      toast({ message: 'Could not update the team.', tone: 'error' })
+    }
   }
 
   return (
@@ -106,6 +110,7 @@ export default function TeamsPage() {
 function TeamEditor({ team, onDone }: { team: Team; onDone: () => void }) {
   const updateTeam = useUpdateTeam()
   const { ensureName } = useNamePrompt()
+  const toast = useToast()
   const [name, setName] = useState(team.name)
   const [description, setDescription] = useState(team.description ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -120,11 +125,11 @@ function TeamEditor({ team, onDone }: { team: Team; onDone: () => void }) {
       })
       onDone()
     } catch (err) {
-      setError(
-        isConflict(err)
-          ? 'That name is taken, or someone else changed this team. Reload and try again.'
-          : 'Could not save the team.',
-      )
+      if (isConflict(err)) {
+        setError('That name is taken, or someone else changed this team. Reload and try again.')
+      } else {
+        toast({ message: 'Could not save the team.', tone: 'error' })
+      }
     }
   }
 

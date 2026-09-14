@@ -84,4 +84,31 @@ describe('TeamsPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Restore Platform' }))
     expect(await screen.findByRole('button', { name: 'Archive Platform' })).toBeInTheDocument()
   })
+
+  it('shows toast when archive fails', async () => {
+    server.use(
+      http.post('/api/teams/:id/:action', () => {
+        return HttpResponse.json({ detail: 'Server error' }, { status: 500 })
+      }),
+    )
+    renderRoutes('/teams')
+    await userEvent.click(await screen.findByRole('button', { name: 'Archive Platform' }))
+    expect(await screen.findByRole('status')).toHaveTextContent(/Could not update the team/i)
+    expect(await within(list()).findByRole('link', { name: 'Platform' })).toBeInTheDocument()
+  })
+
+  it('shows toast when rename fails', async () => {
+    server.use(
+      http.patch('/api/teams/:id', () => {
+        return HttpResponse.json({ detail: 'Server error' }, { status: 500 })
+      }),
+    )
+    renderRoutes('/teams')
+    await userEvent.click(await screen.findByRole('button', { name: 'Rename Platform' }))
+    const input = screen.getByRole('textbox', { name: 'New name for Platform' })
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Core')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('status')).toHaveTextContent(/Could not save the team/i)
+  })
 })
