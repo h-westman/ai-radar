@@ -97,6 +97,36 @@ describe('TeamsPage', () => {
     expect(await within(list()).findByRole('link', { name: 'Platform' })).toBeInTheDocument()
   })
 
+  it('refreshes the team version after a rename conflict so a retry succeeds', async () => {
+    let attempt = 0
+    server.use(
+      http.patch('/api/teams/:id', async ({ params, request }) => {
+        attempt += 1
+        const body = (await request.json()) as { version: number; name: string; description: string | null }
+        if (attempt === 1) {
+          // Someone else renamed the team first: bump its version server-side and report a conflict.
+          const t = teams.find((x) => x.id === Number(params.id))!
+          t.version = 2
+          return HttpResponse.json({ detail: 'exists' }, { status: 409 })
+        }
+        lastPatch = body
+        const t = teams.find((x) => x.id === Number(params.id))!
+        Object.assign(t, body, { version: t.version + 1 })
+        return HttpResponse.json(t)
+      }),
+    )
+    renderRoutes('/teams')
+    await userEvent.click(await screen.findByRole('button', { name: 'Rename Platform' }))
+    const input = screen.getByRole('textbox', { name: 'New name for Platform' })
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Core')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/taken|changed/i)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(lastPatch).toEqual({ version: 2, name: 'Core', description: null }))
+  })
+
   it('shows toast when rename fails', async () => {
     server.use(
       http.patch('/api/teams/:id', () => {

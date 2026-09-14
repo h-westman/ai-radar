@@ -1,6 +1,7 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
-import { conflictCurrent, isConflict } from '../api/client'
+import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import { useCreateTeam, useSetTeamArchived, useTeams, useUpdateTeam } from '../api/hooks'
 import type { Team } from '../api/types'
 import { useNamePrompt } from '../components/NamePrompt'
@@ -29,7 +30,13 @@ export default function TeamsPage() {
       setDescription('')
       setError(null)
     } catch (err) {
-      if (!isConflict(err)) return toast({ message: 'Could not create the team.', tone: 'error' })
+      if (!isConflict(err)) {
+        const message = validationMessage(err)
+        return toast({
+          message: message ? `Could not save: ${message}` : 'Could not create the team.',
+          tone: 'error',
+        })
+      }
       const existing = conflictCurrent<Team>(err)
       setError(
         existing?.archived_at
@@ -109,6 +116,7 @@ export default function TeamsPage() {
 
 function TeamEditor({ team, onDone }: { team: Team; onDone: () => void }) {
   const updateTeam = useUpdateTeam()
+  const queryClient = useQueryClient()
   const { ensureName } = useNamePrompt()
   const toast = useToast()
   const [name, setName] = useState(team.name)
@@ -127,8 +135,11 @@ function TeamEditor({ team, onDone }: { team: Team; onDone: () => void }) {
     } catch (err) {
       if (isConflict(err)) {
         setError('That name is taken, or someone else changed this team. Reload and try again.')
+        // Refresh the list so the row's version updates and a retry can succeed.
+        await queryClient.invalidateQueries({ queryKey: ['teams'] })
       } else {
-        toast({ message: 'Could not save the team.', tone: 'error' })
+        const message = validationMessage(err)
+        toast({ message: message ? `Could not save: ${message}` : 'Could not save the team.', tone: 'error' })
       }
     }
   }
