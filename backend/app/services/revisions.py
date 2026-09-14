@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.models import Revision, Team, TeamNote
-from app.schemas import TeamOut
+from app.models import Practice, Revision, Team, TeamNote
+from app.schemas import PracticeOut, TeamOut
 
 _REGISTRY: dict[type, tuple[str, type[BaseModel]]] = {}
 
@@ -12,6 +12,7 @@ def register(model_cls: type, entity_type: str, schema_cls: type[BaseModel]) -> 
 
 
 register(Team, "team", TeamOut)
+register(Practice, "practice", PracticeOut)
 
 
 def entity_id_of(entity: object) -> str:
