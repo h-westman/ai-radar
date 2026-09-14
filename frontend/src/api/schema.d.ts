@@ -346,7 +346,7 @@ export interface components {
              * Removed
              * @default false
              */
-            removed: boolean;
+            removed?: boolean;
             /** Team Id */
             team_id: number;
             /** Value */
@@ -398,7 +398,7 @@ export interface components {
              * Body Md
              * @default
              */
-            body_md: string;
+            body_md?: string;
             /**
              * Category
              * @enum {string}
@@ -408,19 +408,19 @@ export interface components {
              * Links
              * @default []
              */
-            links: components["schemas"]["Link"][];
+            links?: components["schemas"]["Link"][];
             /** Name */
             name: string;
             /**
              * Summary
              * @default
              */
-            summary: string;
+            summary?: string;
             /**
              * Tags
              * @default []
              */
-            tags: string[];
+            tags?: string[];
         };
         /** PracticeDetail */
         PracticeDetail: {
@@ -483,7 +483,7 @@ export interface components {
              * Teams Count
              * @default 0
              */
-            teams_count: number;
+            teams_count?: number;
         };
         /** PracticeOut */
         PracticeOut: {

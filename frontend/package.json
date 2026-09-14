@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test": "NODE_OPTIONS=--no-experimental-webstorage vitest run",
     "typecheck": "tsc -b",
-    "gen:api": "cd ../backend && uv run python -m scripts.export_openapi > ../frontend/openapi.json && cd ../frontend && openapi-typescript openapi.json -o src/api/schema.d.ts",
+    "gen:api": "cd ../backend && uv run python -m scripts.export_openapi > ../frontend/openapi.json && cd ../frontend && openapi-typescript openapi.json -o src/api/schema.d.ts --default-non-nullable false",
     "check:api": "npm run gen:api && git diff --exit-code -- openapi.json src/api/schema.d.ts"
   },
   "dependencies": {

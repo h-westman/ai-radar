@@ -47,7 +47,7 @@ describe('query hooks', () => {
     )
     await waitFor(() => expect(result.current.frames.isSuccess).toBe(true))
     await act(() =>
-      result.current.place.mutateAsync({ team_id: 1, practice_id: 10, adoption: 5, value: 5, removed: false }),
+      result.current.place.mutateAsync({ team_id: 1, practice_id: 10, adoption: 5, value: 5 }),
     )
     await waitFor(() => expect(frameCalls).toBe(2))
   })
