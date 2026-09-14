@@ -5,6 +5,7 @@ import {
   clampScore,
   fromPixel,
   plotBox,
+  positionLabel,
   TEAM_RADIUS,
   toPixel,
 } from './geometry'
@@ -46,5 +47,12 @@ describe('geometry', () => {
 
   it('uses category tokens', () => {
     expect(categoryColor('workflow')).toBe('var(--cat-workflow)')
+  })
+
+  it('labels positions like the backend', () => {
+    expect(positionLabel(80, 90)).toBe('Core')
+    expect(positionLabel(49, 50)).toBe('Hidden gem')
+    expect(positionLabel(50, 49)).toBe('Question it')
+    expect(positionLabel(0, 0)).toBe('Parked')
   })
 })

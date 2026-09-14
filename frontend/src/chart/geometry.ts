@@ -49,3 +49,11 @@ export const CORNER_LABELS = {
 export function categoryColor(category: Category): string {
   return `var(--cat-${category})`
 }
+
+export type PositionLabel = 'Core' | 'Hidden gem' | 'Question it' | 'Parked'
+
+export function positionLabel(adoption: number, value: number): PositionLabel {
+  const highAdoption = adoption >= 50
+  if (value >= 50) return highAdoption ? 'Core' : 'Hidden gem'
+  return highAdoption ? 'Question it' : 'Parked'
+}
