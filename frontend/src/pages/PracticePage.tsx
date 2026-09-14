@@ -186,7 +186,9 @@ function Overview({ practice }: { practice: PracticeDetail }) {
   })
 
   const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname,
+    ({ currentLocation, nextLocation }) =>
+      dirty &&
+      (currentLocation.pathname !== nextLocation.pathname || currentLocation.search !== nextLocation.search),
   )
   useEffect(() => {
     if (!dirty) return

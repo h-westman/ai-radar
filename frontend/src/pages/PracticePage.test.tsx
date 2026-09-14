@@ -128,6 +128,19 @@ describe('PracticePage', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/practices'))
   })
 
+  it('asks before switching to History with unsaved changes', async () => {
+    open()
+    await editSummary('Unsaved')
+    await userEvent.click(screen.getByRole('tab', { name: 'History' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Discard unsaved changes?' })
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByRole('tab', { name: 'Overview' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByText('Unsaved')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('tab', { name: 'History' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }))
+    expect(await screen.findByRole('list', { name: 'Revisions' })).toBeInTheDocument()
+  })
+
   it('shows history and reverts to an earlier revision', async () => {
     open()
     await userEvent.click(await screen.findByRole('tab', { name: 'History' }))
