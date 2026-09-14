@@ -36,4 +36,29 @@ describe('RadarChart', () => {
     })
     expect(onDropPractice).toHaveBeenCalledWith(12, 50, 50)
   })
+
+  it('lets the chart container shrink below the SVG width', () => {
+    // The renderer stamps the measured size onto the SVG as a width attribute. Without
+    // min-width: 0 the flex item's automatic minimum keeps the container at that width when
+    // the layout narrows (the tray appears when switching from the org radar to a team radar),
+    // so the ResizeObserver never reports a change and the chart stays too wide.
+    const { container } = render(
+      <RadarChart
+        scope="team"
+        bubbles={[]}
+        dateLabel="Now"
+        selected={[]}
+        trails={{}}
+        editable={false}
+        editingPast={false}
+        highlight=""
+        duration={0}
+        onSelect={noop}
+        onMove={noop}
+        onRemove={noop}
+        onNudge={noop}
+      />,
+    )
+    expect(container.firstElementChild).toHaveStyle('min-width: 0')
+  })
 })

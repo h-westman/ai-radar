@@ -68,7 +68,7 @@ export default function RadarChart(props: Props) {
   return (
     <div
       ref={containerRef}
-      style={{ position: 'relative', flex: 1, minHeight: 360 }}
+      style={{ position: 'relative', flex: 1, minWidth: 0, minHeight: 360 }}
       onDragOver={onDragOver}
       onDrop={onDrop}
     >
