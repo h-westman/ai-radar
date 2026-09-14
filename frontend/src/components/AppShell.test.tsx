@@ -39,6 +39,13 @@ describe('app shell', () => {
     expect(router.state.location.pathname).toBe('/radar/org')
   })
 
+  it('shows the current team option even after its slug is stale in the URL', async () => {
+    renderRoutes('/radar/team/1-old-slug')
+    const select = await screen.findByRole('combobox', { name: 'Radar' })
+    await screen.findByRole('option', { name: 'Platform' })
+    await waitFor(() => expect(select).toHaveValue('1-platform'))
+  })
+
   it('shows the name chip and lets you change it', async () => {
     renderRoutes('/radar/org')
     await userEvent.click(await screen.findByRole('button', { name: /anonymous/i }))

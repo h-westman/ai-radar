@@ -1,7 +1,7 @@
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
 import { useTeams } from '../api/hooks'
 import { getEditedBy } from '../lib/editedBy'
-import { toRef } from '../lib/refs'
+import { idFromRef, toRef } from '../lib/refs'
 import { writeString } from '../lib/storage'
 import styles from './AppShell.module.css'
 import { useNamePrompt } from './NamePrompt'
@@ -16,7 +16,14 @@ export default function AppShell() {
   const { changeName } = useNamePrompt()
   const name = getEditedBy()
 
-  const current = teamMatch?.params.teamRef ?? (orgMatch ? 'org' : '')
+  const teamRef = teamMatch?.params.teamRef
+  const teamId = teamRef ? idFromRef(teamRef) : null
+  const matchedTeam = teamId !== null ? teams.find((t) => t.id === teamId) : undefined
+  const current = teamRef
+    ? (matchedTeam ? toRef(matchedTeam.id, matchedTeam.slug) : teamRef)
+    : orgMatch
+      ? 'org'
+      : ''
 
   function onScopeChange(value: string) {
     if (value === 'org') {
