@@ -1,0 +1,13 @@
+.editor { display: flex; flex-direction: column; gap: var(--space-2); }
+.modes { display: inline-flex; align-self: flex-end; }
+.modes button { border-radius: 0; }
+.modes button:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.modes button:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.modes button[aria-checked='true'] { background: var(--accent); color: var(--accent-contrast); }
+.markdownEditor { display: flex; flex-direction: column; }
+.tabs { display: flex; gap: var(--space-1); }
+.tabs button[aria-selected='true'] { font-weight: 600; background: var(--surface-2); }
+.toolbar { display: flex; gap: var(--space-1); padding: var(--space-1) 0; }
+.textarea { width: 100%; font-family: var(--font-mono); min-height: 200px; resize: vertical; }
+.preview { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); min-height: 200px; }
+.rich { border: 1px solid var(--border); border-radius: var(--radius-sm); min-height: 200px; background: var(--surface); }
