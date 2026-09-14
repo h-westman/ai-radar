@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { conflictCurrent, isConflict } from '../api/client'
+import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import { useCreatePractice, useSetPracticeArchived, useSimilar } from '../api/hooks'
 import { CATEGORIES, type Category, type Practice } from '../api/types'
 import { useNamePrompt } from '../components/NamePrompt'
@@ -31,8 +31,12 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
     try {
       open(await create.mutateAsync({ name, category, summary }))
     } catch (err) {
-      if (isConflict(err)) setConflict(conflictCurrent<Practice>(err))
-      else toast({ message: 'Could not create the practice.', tone: 'error' })
+      if (isConflict(err)) {
+        setConflict(conflictCurrent<Practice>(err))
+      } else {
+        const message = validationMessage(err)
+        toast({ message: message ? `Could not save: ${message}` : 'Could not create the practice.', tone: 'error' })
+      }
     }
   }
 

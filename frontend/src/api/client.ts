@@ -45,3 +45,20 @@ export function conflictCurrent<T>(e: ApiError): T | null {
   const body = e.body as { current?: T | null } | undefined
   return body?.current ?? null
 }
+
+type ValidationItem = { loc?: unknown[]; msg?: string }
+
+export function validationMessage(e: unknown): string | null {
+  if (!(e instanceof ApiError) || e.status !== 422) return null
+  const detail = (e.body as { detail?: unknown } | undefined)?.detail
+  if (typeof detail === 'string') return detail
+  if (!Array.isArray(detail)) return null
+  const parts = detail
+    .map((item: ValidationItem) => {
+      const loc = Array.isArray(item.loc) ? item.loc.filter((l) => l !== 'body') : []
+      const path = loc.join(' → ')
+      return path ? `${path}: ${item.msg ?? ''}` : (item.msg ?? '')
+    })
+    .filter(Boolean)
+  return parts.length > 0 ? parts.join('; ') : null
+}

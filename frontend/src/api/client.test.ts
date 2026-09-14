@@ -2,7 +2,7 @@ import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
 import { server } from '../test/server'
 import { setEditedBy } from '../lib/editedBy'
-import { api, ApiError, conflictCurrent, isConflict, unwrap } from './client'
+import { api, ApiError, conflictCurrent, isConflict, unwrap, validationMessage } from './client'
 
 function captureEditedBy() {
   const seen: (string | null)[] = []
@@ -52,5 +52,38 @@ describe('api client', () => {
   it('unwrap returns data for ok responses', async () => {
     server.use(http.get('/api/teams', () => HttpResponse.json([{ id: 1 }])))
     expect(unwrap(await api.GET('/api/teams'))).toEqual([{ id: 1 }])
+  })
+
+  describe('validationMessage', () => {
+    it('joins loc segments and strips the leading "body" entry for an array detail', () => {
+      const error = new ApiError(422, {
+        detail: [{ loc: ['body', 'links', 0, 'url'], msg: 'Input should be a valid URL' }],
+      })
+      expect(validationMessage(error)).toBe('links → 0 → url: Input should be a valid URL')
+    })
+
+    it('joins multiple items with "; "', () => {
+      const error = new ApiError(422, {
+        detail: [
+          { loc: ['body', 'name'], msg: 'Field required' },
+          { loc: ['body', 'category'], msg: 'Input should be a valid category' },
+        ],
+      })
+      expect(validationMessage(error)).toBe('name: Field required; category: Input should be a valid category')
+    })
+
+    it('passes a string detail through unchanged', () => {
+      const error = new ApiError(422, { detail: 'Something is invalid' })
+      expect(validationMessage(error)).toBe('Something is invalid')
+    })
+
+    it('returns null for a non-422 ApiError', () => {
+      const error = new ApiError(500, { detail: 'boom' })
+      expect(validationMessage(error)).toBeNull()
+    })
+
+    it('returns null for a non-ApiError value', () => {
+      expect(validationMessage(new Error('nope'))).toBeNull()
+    })
   })
 })
