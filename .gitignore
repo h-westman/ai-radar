@@ -1,6 +1,9 @@
 # Brainstorming companion mockups
 .superpowers/
 
+# Claude Code worktrees
+.claude/worktrees/
+
 # OS / editor
 .DS_Store
 .idea/
