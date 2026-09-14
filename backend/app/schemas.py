@@ -96,6 +96,7 @@ class PracticeListItem(ORMModel):
     summary: str
     tags: list[str]
     archived_at: datetime | None
+    teams_count: int = 0
 
 
 class PracticeCreate(BaseModel):
@@ -132,6 +133,18 @@ class PracticeUpdate(BaseModel):
     @classmethod
     def _dedupe_tags(cls, tags: list[str]) -> list[str]:
         return _unique(tags)
+
+
+class PracticeTeamUsage(BaseModel):
+    team_id: int
+    team_name: str
+    team_slug: str
+    label: str
+    note_md: str | None
+
+
+class PracticeDetail(PracticeOut):
+    teams: list[PracticeTeamUsage]
 
 
 # --- Placements --------------------------------------------------------------

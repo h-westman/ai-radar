@@ -7,14 +7,18 @@ from sqlalchemy.orm import Session
 from app.clock import utcnow
 from app.deps import EditedBy, SessionDep
 from app.errors import ConflictError, ensure_version
-from app.models import Practice
+from app.models import Practice, Team, TeamNote
 from app.schemas import (
     Category,
     PracticeCreate,
+    PracticeDetail,
     PracticeListItem,
     PracticeOut,
+    PracticeTeamUsage,
     PracticeUpdate,
 )
+from app.services.labels import corner_label
+from app.services.positions import current_usage
 from app.services.revisions import record_revision, serialize
 from app.services.similarity import similar_practices
 from app.services.slugs import slugify
@@ -42,6 +46,16 @@ def _touch(practice: Practice) -> None:
     practice.updated_at = utcnow()
 
 
+def _with_counts(session: Session, practices: list[Practice]) -> list[PracticeListItem]:
+    usage = current_usage(session)
+    return [
+        PracticeListItem.model_validate(p).model_copy(
+            update={"teams_count": len(usage.get(p.id, []))}
+        )
+        for p in practices
+    ]
+
+
 @router.get("", response_model=list[PracticeListItem])
 def list_practices(
     session: SessionDep,
@@ -49,7 +63,7 @@ def list_practices(
     category: Category | None = None,
     tag: str | None = None,
     include_archived: bool = False,
-) -> list[Practice]:
+) -> list[PracticeListItem]:
     stmt = select(Practice).order_by(func.lower(Practice.name))
     if not include_archived:
         stmt = stmt.where(Practice.archived_at.is_(None))
@@ -60,14 +74,14 @@ def list_practices(
         stmt = stmt.where(Practice.category == category)
     if tag:
         stmt = stmt.where(Practice.tags.any(tag))
-    return list(session.scalars(stmt))
+    return _with_counts(session, list(session.scalars(stmt)))
 
 
 @router.get("/similar", response_model=list[PracticeListItem])
 def similar(
     session: SessionDep, name: Annotated[str, Query(min_length=2, max_length=100)]
-) -> list[Practice]:
-    return similar_practices(session, name.strip())
+) -> list[PracticeListItem]:
+    return _with_counts(session, similar_practices(session, name.strip()))
 
 
 @router.post("", response_model=PracticeOut, status_code=201)
@@ -81,9 +95,29 @@ def create_practice(data: PracticeCreate, session: SessionDep, editor: EditedBy)
     return practice
 
 
-@router.get("/{practice_id}", response_model=PracticeOut)
-def get_practice(practice_id: int, session: SessionDep) -> Practice:
-    return get_practice_or_404(session, practice_id)
+@router.get("/{practice_id}", response_model=PracticeDetail)
+def get_practice(practice_id: int, session: SessionDep) -> PracticeDetail:
+    practice = get_practice_or_404(session, practice_id)
+    rows = current_usage(session, practice_id=practice.id).get(practice.id, [])
+    teams = {
+        t.id: t for t in session.scalars(select(Team).where(Team.id.in_([r.team_id for r in rows])))
+    }
+    notes = {
+        n.team_id: n.body_md
+        for n in session.scalars(select(TeamNote).where(TeamNote.practice_id == practice.id))
+    }
+    usage = [
+        PracticeTeamUsage(
+            team_id=r.team_id,
+            team_name=teams[r.team_id].name,
+            team_slug=teams[r.team_id].slug,
+            label=corner_label(r.adoption, r.value),
+            note_md=notes.get(r.team_id),
+        )
+        for r in rows
+    ]
+    usage.sort(key=lambda u: u.team_name.lower())
+    return PracticeDetail(**PracticeOut.model_validate(practice).model_dump(), teams=usage)
 
 
 @router.patch("/{practice_id}", response_model=PracticeOut)
