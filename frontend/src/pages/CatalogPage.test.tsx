@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setEditedBy } from '../lib/editedBy'
-import { listItem, practice } from '../test/fixtures'
+import { detail, listItem, practice } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
 
@@ -22,6 +22,8 @@ beforeEach(() => {
       const q = lastQuery.get('q')?.toLowerCase()
       return HttpResponse.json(q ? all.filter((p) => p.name.toLowerCase().includes(q)) : all)
     }),
+    http.get('/api/practices/:id', ({ params }) => HttpResponse.json(detail({ id: Number(params.id) }))),
+    http.get('/api/revisions', () => HttpResponse.json([])),
   )
 })
 

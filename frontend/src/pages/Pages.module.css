@@ -14,3 +14,13 @@
 .similar { background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
 .teamRow { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) 0; border-bottom: 1px solid var(--border); }
 .teamRow > :first-child { flex: 1; }
+
+.practiceLayout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: var(--space-6); align-items: start; }
+.practiceMain { display: flex; flex-direction: column; gap: var(--space-3); }
+.inlineField { display: flex; align-items: flex-start; gap: var(--space-2); }
+.inlineField > :first-child { flex: 1; }
+.editButton { border: none; background: transparent; color: var(--text-muted); opacity: 0.6; }
+.inlineField:hover .editButton, .editButton:focus-visible { opacity: 1; }
+.revisionList { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+.revisionList button { width: 100%; text-align: left; }
+.revisionList button[aria-pressed='true'] { border-color: var(--accent); background: var(--surface-2); }
