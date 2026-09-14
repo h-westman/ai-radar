@@ -52,19 +52,3 @@ export function renderWithProviders(ui: ReactElement) {
   )
   return { router, client, ...result }
 }
-
-// Export render wrapped with all providers for components that need router/query context
-export function render(ui: ReactElement) {
-  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: ['/'] })
-  const client = createTestQueryClient()
-  const result = baseRender(
-    <QueryClientProvider client={client}>
-      <ToastProvider>
-        <NamePromptProvider>
-          <RouterProvider router={router} />
-        </NamePromptProvider>
-      </ToastProvider>
-    </QueryClientProvider>,
-  )
-  return { router, client, ...result }
-}

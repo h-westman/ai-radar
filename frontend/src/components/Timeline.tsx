@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { Step } from '../api/types'
 import { formatFrameDate } from '../chart/frames'
 import styles from './Panels.module.css'
@@ -24,14 +24,25 @@ export default function Timeline(props: Props) {
   const isLatest = index >= last
   const label = isLatest ? 'Now' : dates[index] ? formatFrameDate(dates[index], step) : ''
 
+  const onIndexChangeRef = useRef(props.onIndexChange)
+  const onPlayingChangeRef = useRef(props.onPlayingChange)
+
+  useEffect(() => {
+    onIndexChangeRef.current = props.onIndexChange
+  }, [props.onIndexChange])
+
+  useEffect(() => {
+    onPlayingChangeRef.current = props.onPlayingChange
+  }, [props.onPlayingChange])
+
   useEffect(() => {
     if (!playing) return
     const timer = window.setTimeout(() => {
-      if (index < last) props.onIndexChange(index + 1)
-      else props.onPlayingChange(false)
+      if (index < last) onIndexChangeRef.current(index + 1)
+      else onPlayingChangeRef.current(false)
     }, FRAME_MS)
     return () => window.clearTimeout(timer)
-  }, [playing, index, last, props])
+  }, [playing, index, last])
 
   function togglePlay() {
     if (playing) return props.onPlayingChange(false)

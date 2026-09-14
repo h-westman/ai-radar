@@ -73,4 +73,47 @@ describe('Timeline', () => {
     fireEvent.change(screen.getByRole('combobox', { name: 'Step' }), { target: { value: 'week' } })
     expect(state().step).toBe('week')
   })
+
+  it('does not reset the playback timer when inline callbacks change (regression test)', () => {
+    function RerenderHarness() {
+      const [index, setIndex] = useState(0)
+      const [playing, setPlaying] = useState(false)
+      const [unlocked, setUnlocked] = useState(false)
+      const [step, setStep] = useState<Step>('month')
+      const [renderCount, setRenderCount] = useState(0)
+      return (
+        <>
+          <Timeline
+            dates={DATES}
+            index={index}
+            step={step}
+            playing={playing}
+            canEdit
+            unlocked={unlocked}
+            onIndexChange={setIndex}
+            onPlayingChange={setPlaying}
+            onStepChange={setStep}
+            onUnlockedChange={setUnlocked}
+          />
+          <output data-testid="state">{JSON.stringify({ index, playing, renderCount })}</output>
+          <button onClick={() => setRenderCount((n) => n + 1)}>Force rerender with new callbacks</button>
+        </>
+      )
+    }
+    render(<RerenderHarness />)
+    fireEvent.click(screen.getByRole('button', { name: 'Play' }))
+    expect(state()).toMatchObject({ index: 0, playing: true })
+
+    // Advance 500ms (halfway through the 800ms frame)
+    act(() => vi.advanceTimersByTime(500))
+    // Force a re-render with new inline callbacks (simulates parent component re-render with new callback props)
+    fireEvent.click(screen.getByRole('button', { name: 'Force rerender with new callbacks' }))
+    expect(state().renderCount).toBe(1)
+
+    // Advance another 300ms to complete the 800ms frame from the START
+    // With the bug, the timer would reset and we'd need another 800ms
+    act(() => vi.advanceTimersByTime(300))
+    expect(state().index).toBe(1)
+    expect(state().playing).toBe(true)
+  })
 })

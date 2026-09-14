@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { PRACTICE_MIME } from '../chart/renderRadar'
 import { listItem } from '../test/fixtures'
-import { render } from '../test/render'
+import { renderWithProviders as render } from '../test/render'
 import Tray from './Tray'
 
 const practices = [
