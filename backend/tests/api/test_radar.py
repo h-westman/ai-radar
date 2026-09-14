@@ -130,3 +130,13 @@ def test_invalid_params_are_422(client, params):
 
 def test_unknown_team_is_404(client):
     assert frames(client, scope="team:999999").status_code == 404
+
+
+def test_huge_range_is_rejected(client):
+    response = frames(client, **{"from": "0001-01-01T00:00:00Z"}, step="week")
+    assert response.status_code == 422
+
+
+def test_huge_range_with_offset_does_not_500(client):
+    response = frames(client, **{"from": "0001-01-01T00:00:00+05:00"})
+    assert response.status_code == 422

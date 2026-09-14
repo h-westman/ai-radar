@@ -42,6 +42,11 @@ def get_frames(
         start = min(start, end - timedelta(days=365))  # room to backdate (spec §3)
     if start > end:
         raise HTTPException(status_code=422, detail="'from' must not be after 'to'")
+    max_span = timedelta(days=366 * 25)
+    if end - start > max_span:
+        raise HTTPException(
+            status_code=422, detail=f"'from' to 'to' must not span more than {max_span.days} days"
+        )
 
     practices = {
         p.id: p for p in session.scalars(select(Practice).where(Practice.archived_at.is_(None)))
