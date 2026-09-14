@@ -20,7 +20,7 @@ def get_team_or_404(session: Session, team_id: int, *, lock: bool = False) -> Te
     return team
 
 
-def _ensure_name_free(session: Session, name: str, exclude_id: int | None = None) -> None:
+def ensure_team_name_free(session: Session, name: str, exclude_id: int | None = None) -> None:
     stmt = select(Team).where(func.lower(Team.name) == name.lower())
     if exclude_id is not None:
         stmt = stmt.where(Team.id != exclude_id)
@@ -43,7 +43,7 @@ def list_teams(session: SessionDep, include_archived: bool = False) -> list[Team
 
 @router.post("", response_model=TeamOut, status_code=201)
 def create_team(data: TeamCreate, session: SessionDep, editor: EditedBy) -> Team:
-    _ensure_name_free(session, data.name)
+    ensure_team_name_free(session, data.name)
     team = Team(name=data.name, slug=slugify(data.name), description=data.description)
     session.add(team)
     session.flush()
@@ -63,7 +63,7 @@ def update_team(team_id: int, data: TeamUpdate, session: SessionDep, editor: Edi
     ensure_version(team.version, data.version, serialize(team))
     changes = data.model_dump(exclude_unset=True, exclude={"version"})
     if "name" in changes:
-        _ensure_name_free(session, changes["name"], exclude_id=team.id)
+        ensure_team_name_free(session, changes["name"], exclude_id=team.id)
         team.slug = slugify(changes["name"])
     for field, value in changes.items():
         setattr(team, field, value)

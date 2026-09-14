@@ -40,3 +40,10 @@ def record_revision(
     )
     session.add(revision)
     return revision
+
+
+EDITABLE_FIELDS: dict[str, tuple[str, ...]] = {
+    "team": ("name", "description"),
+    "practice": ("name", "category", "summary", "body_md", "tags", "links"),
+    "team_note": ("body_md",),
+}

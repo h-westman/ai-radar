@@ -181,3 +181,23 @@ class NoteOut(ORMModel):
 class NotePut(BaseModel):
     version: int = Field(ge=0)
     body_md: Markdown
+
+
+# --- Revisions ---------------------------------------------------------------
+
+EntityType = Literal["team", "practice", "team_note"]
+
+
+class RevisionOut(ORMModel):
+    id: int
+    entity_type: EntityType
+    entity_id: str
+    action: str
+    snapshot: dict
+    edited_by: str | None
+    created_at: datetime
+
+
+class RevertOut(BaseModel):
+    entity_type: EntityType
+    entity: dict
