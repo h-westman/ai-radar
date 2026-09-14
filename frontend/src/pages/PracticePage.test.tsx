@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import type { PracticeDetail, PracticeUpdate } from '../api/types'
 import { EDITOR_MODE_KEY } from '../editor/Editor'
 import { setEditedBy } from '../lib/editedBy'
-import { detail, revision } from '../test/fixtures'
+import { detail, practice, revision } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
 
@@ -55,6 +55,14 @@ const open = () => renderRoutes('/practices/10-claude-code')
 async function editSummary(text: string) {
   await userEvent.click(await screen.findByRole('button', { name: 'Edit summary' }))
   const input = screen.getByRole('textbox', { name: 'Summary' })
+  await userEvent.clear(input)
+  await userEvent.type(input, text)
+  await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+}
+
+async function editName(text: string) {
+  await userEvent.click(await screen.findByRole('button', { name: 'Edit name' }))
+  const input = screen.getByRole('textbox', { name: 'Name' })
   await userEvent.clear(input)
   await userEvent.type(input, text)
   await userEvent.click(screen.getByRole('button', { name: 'Done' }))
@@ -114,6 +122,54 @@ describe('PracticePage', () => {
     expect(screen.getByText('Mine')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
     await waitFor(() => expect(patches[1]).toEqual({ version: 2, summary: 'Mine' }))
+  })
+
+  it('shows a name-conflict alert without corrupting the cache when renaming collides with another practice', async () => {
+    const other = practice({ id: 7, slug: 'other-practice', name: 'Other Practice', version: 5, summary: 'Belongs to someone else.' })
+    server.use(
+      http.patch('/api/practices/10', async ({ request }) => {
+        const body = (await request.json()) as PracticeUpdate
+        patches.push(body)
+        if (patches.length === 1) {
+          return HttpResponse.json({ detail: 'exists', current: other }, { status: 409 })
+        }
+        current = { ...current, ...body, version: current.version + 1 } as PracticeDetail
+        return HttpResponse.json(current)
+      }),
+    )
+    open()
+    await editName('Other Practice')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('A practice named "Other Practice" already exists.')
+    expect(within(alert).getByRole('link', { name: 'Open it' })).toHaveAttribute(
+      'href',
+      '/practices/7-other-practice',
+    )
+    // The cache for practice 10 must be untouched by the other practice's record.
+    expect(screen.getByText('Agentic coding assistant.')).toBeInTheDocument()
+
+    await editName('Claude Code Pro')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(patches[1]).toEqual({ version: 1, name: 'Claude Code Pro' }))
+  })
+
+  it('shows the field message from a 422 validation error', async () => {
+    server.use(
+      http.patch('/api/practices/10', () =>
+        HttpResponse.json(
+          { detail: [{ loc: ['body', 'links', 0, 'url'], msg: 'Input should be a valid URL' }] },
+          { status: 422 },
+        ),
+      ),
+    )
+    open()
+    await editSummary('New summary')
+    await userEvent.click(screen.getByRole('button', { name: 'Save' }))
+    expect(
+      await screen.findByText('Could not save: links → 0 → url: Input should be a valid URL'),
+    ).toBeInTheDocument()
   })
 
   it('asks before leaving with unsaved changes', async () => {

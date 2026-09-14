@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useBlocker, useParams, useSearchParams } from 'react-router'
-import { conflictCurrent, isConflict } from '../api/client'
+import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import {
   keys,
   usePractice,
@@ -98,7 +98,11 @@ export default function PracticePage() {
           </button>
         )}
       </div>
-      {tab === 'overview' ? <Overview practice={practice} /> : <History practice={practice} />}
+      {tab === 'overview' ? (
+        <Overview key={practice.id} practice={practice} />
+      ) : (
+        <History key={practice.id} practice={practice} />
+      )}
     </div>
   )
 }
@@ -159,7 +163,7 @@ function LinksEditor({ links, onChange }: { links: PracticeLink[]; onChange: (li
           </button>
         </div>
       ))}
-      <button onClick={() => onChange([...links, { label: '', url: 'https://' }])}>Add link</button>
+      <button onClick={() => onChange([...links, { label: '', url: '' }])}>Add link</button>
     </div>
   )
 }
@@ -168,6 +172,7 @@ function Overview({ practice }: { practice: PracticeDetail }) {
   const [draft, setDraft] = useState<Draft>({})
   const [editing, setEditing] = useState<Field | null>(null)
   const [conflict, setConflict] = useState(false)
+  const [nameConflict, setNameConflict] = useState<Practice | null>(null)
   const update = useUpdatePractice()
   const queryClient = useQueryClient()
   const { ensureName } = useNamePrompt()
@@ -209,11 +214,26 @@ function Overview({ practice }: { practice: PracticeDetail }) {
       setDraft({})
       setEditing(null)
       setConflict(false)
+      setNameConflict(null)
     } catch (err) {
-      if (!isConflict(err)) return toast({ message: 'Could not save your changes.', tone: 'error' })
+      if (!isConflict(err)) {
+        const message = validationMessage(err)
+        return toast({
+          message: message ? `Could not save: ${message}` : 'Could not save your changes.',
+          tone: 'error',
+        })
+      }
       const current = conflictCurrent<Practice>(err)
+      if (current && current.id !== practice.id) {
+        // A duplicate-name conflict carries the OTHER practice as `current`. Merging it into
+        // this practice's cache entry would corrupt its id/version/slug, so leave the cache
+        // alone and just surface a message with a link to the existing practice.
+        setNameConflict(current)
+        return
+      }
       if (current) queryClient.setQueryData(keys.practice(practice.id), { ...practice, ...current })
       setConflict(true)
+      setNameConflict(null)
     }
   }
 
@@ -221,6 +241,7 @@ function Overview({ practice }: { practice: PracticeDetail }) {
     setDraft({})
     setEditing(null)
     setConflict(false)
+    setNameConflict(null)
   }
 
   return (
@@ -228,6 +249,12 @@ function Overview({ practice }: { practice: PracticeDetail }) {
       {conflict && (
         <p role="alert" className={styles.error}>
           Someone else saved changes to this practice. Your edits are kept below. Review them and save again.
+        </p>
+      )}
+      {nameConflict && (
+        <p role="alert" className={styles.error}>
+          A practice named "{view.name}" already exists.{' '}
+          <Link to={`/practices/${toRef(nameConflict.id, nameConflict.slug)}`}>Open it</Link>
         </p>
       )}
       <div className={styles.practiceLayout}>
