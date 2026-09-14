@@ -214,3 +214,37 @@ class RevisionOut(ORMModel):
 class RevertOut(BaseModel):
     entity_type: EntityType
     entity: dict
+
+
+# --- Radar frames ------------------------------------------------------------
+
+
+class TeamPositionOut(ORMModel):
+    team_id: int
+    adoption: int
+    value: int
+
+
+class PointOut(ORMModel):
+    practice_id: int
+    adoption: int
+    value: int
+    teams: int
+    team_positions: list[TeamPositionOut] | None = None
+
+
+class FrameOut(ORMModel):
+    date: datetime
+    points: list[PointOut]
+
+
+class PracticeRef(BaseModel):
+    name: str
+    category: Category
+
+
+class FramesOut(BaseModel):
+    scope: str
+    step: Literal["week", "month"]
+    frames: list[FrameOut]
+    practices: dict[str, PracticeRef]

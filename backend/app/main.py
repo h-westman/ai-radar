@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from app.errors import ConflictError, conflict_handler
-from app.routers import health, notes, placements, practices, revisions, teams
+from app.routers import health, notes, placements, practices, radar, revisions, teams
 
 
 def create_app() -> FastAPI:
@@ -14,6 +14,7 @@ def create_app() -> FastAPI:
         placements.router,
         notes.router,
         revisions.router,
+        radar.router,
     ):
         app.include_router(router, prefix="/api")
     return app
