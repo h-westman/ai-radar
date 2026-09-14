@@ -30,10 +30,10 @@ export default function MarkdownEditor({ value, onChange, label }: Props) {
   return (
     <div className={styles.markdownEditor}>
       <div role="tablist" className={styles.tabs}>
-        <button role="tab" aria-selected={tab === 'write'} onClick={() => setTab('write')}>
+        <button type="button" role="tab" aria-selected={tab === 'write'} onClick={() => setTab('write')}>
           Write
         </button>
-        <button role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>
+        <button type="button" role="tab" aria-selected={tab === 'preview'} onClick={() => setTab('preview')}>
           Preview
         </button>
       </div>

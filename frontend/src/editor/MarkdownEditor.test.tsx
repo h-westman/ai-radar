@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import MarkdownEditor from './MarkdownEditor'
 
 function Harness({ initial = '' }: { initial?: string }) {
@@ -28,5 +28,16 @@ describe('MarkdownEditor', () => {
     render(<Harness initial="## Title" />)
     await userEvent.click(screen.getByRole('tab', { name: 'Preview' }))
     expect(screen.getByRole('heading', { name: 'Title' })).toBeInTheDocument()
+  })
+
+  it('does not submit an enclosing form when a tab is clicked', async () => {
+    const onSubmit = vi.fn()
+    render(
+      <form onSubmit={onSubmit}>
+        <Harness initial="## Title" />
+      </form>,
+    )
+    await userEvent.click(screen.getByRole('tab', { name: 'Preview' }))
+    expect(onSubmit).not.toHaveBeenCalled()
   })
 })
