@@ -1,8 +1,9 @@
+from fastapi import HTTPException
 from limits import parse
 from limits.storage import MemoryStorage
 from limits.strategies import MovingWindowRateLimiter
 from starlette.responses import JSONResponse
-from starlette.types import ASGIApp, Receive, Scope, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 
@@ -56,4 +57,20 @@ class BodySizeLimitMiddleware:
                 response = JSONResponse({"detail": "Request body too large"}, status_code=413)
                 await response(scope, receive, send)
                 return
+            receive = self._limited_receive(receive)
         await self.app(scope, receive, send)
+
+    def _limited_receive(self, receive: Receive) -> Receive:
+        """Enforce the cap even without Content-Length (e.g. chunked transfer)."""
+        total = 0
+
+        async def wrapped_receive() -> Message:
+            nonlocal total
+            message = await receive()
+            if message["type"] == "http.request":
+                total += len(message.get("body", b""))
+                if total > self.max_bytes:
+                    raise HTTPException(status_code=413, detail="Request body too large")
+            return message
+
+        return wrapped_receive

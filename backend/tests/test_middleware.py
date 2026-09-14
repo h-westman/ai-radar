@@ -44,6 +44,16 @@ def test_large_bodies_are_rejected(session):
     assert response.status_code == 413
 
 
+def test_chunked_bodies_without_content_length_are_still_capped(session):
+    client = make_client(session, max_body_bytes=1000)
+    response = client.post(
+        "/api/practices",
+        content=iter([b"x" * 3000]),
+        headers={"content-type": "application/json"},
+    )
+    assert response.status_code == 413
+
+
 def test_client_ip_parsing():
     assert (
         client_ip({"headers": [(b"x-forwarded-for", b"203.0.113.7:51000, 10.0.0.1")]})
