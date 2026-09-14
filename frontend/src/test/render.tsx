@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render } from '@testing-library/react'
-import type { ReactNode } from 'react'
+import { render as baseRender } from '@testing-library/react'
+import type { ReactElement, ReactNode } from 'react'
 import { createMemoryRouter, RouterProvider, type RouteObject } from 'react-router'
 import { NamePromptProvider } from '../components/NamePrompt'
 import { ToastProvider } from '../components/Toasts'
@@ -26,7 +26,38 @@ export function renderRoutes(initialPath: string, extraRoutes: RouteObject[] = [
     initialEntries: [initialPath],
   })
   const client = createTestQueryClient()
-  const result = render(
+  const result = baseRender(
+    <QueryClientProvider client={client}>
+      <ToastProvider>
+        <NamePromptProvider>
+          <RouterProvider router={router} />
+        </NamePromptProvider>
+      </ToastProvider>
+    </QueryClientProvider>,
+  )
+  return { router, client, ...result }
+}
+
+export function renderWithProviders(ui: ReactElement) {
+  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: ['/'] })
+  const client = createTestQueryClient()
+  const result = baseRender(
+    <QueryClientProvider client={client}>
+      <ToastProvider>
+        <NamePromptProvider>
+          <RouterProvider router={router} />
+        </NamePromptProvider>
+      </ToastProvider>
+    </QueryClientProvider>,
+  )
+  return { router, client, ...result }
+}
+
+// Export render wrapped with all providers for components that need router/query context
+export function render(ui: ReactElement) {
+  const router = createMemoryRouter([{ path: '*', element: ui }], { initialEntries: ['/'] })
+  const client = createTestQueryClient()
+  const result = baseRender(
     <QueryClientProvider client={client}>
       <ToastProvider>
         <NamePromptProvider>
