@@ -1,7 +1,16 @@
 from datetime import datetime
 from typing import Annotated, Literal
 
-from pydantic import AnyHttpUrl, BaseModel, ConfigDict, Field, StringConstraints, field_validator
+from pydantic import (
+    AnyHttpUrl,
+    AwareDatetime,
+    BaseModel,
+    ConfigDict,
+    Field,
+    StringConstraints,
+    field_validator,
+    model_validator,
+)
 
 Name = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
 Description = Annotated[str, StringConstraints(max_length=2000)]
@@ -123,3 +132,35 @@ class PracticeUpdate(BaseModel):
     @classmethod
     def _dedupe_tags(cls, tags: list[str]) -> list[str]:
         return _unique(tags)
+
+
+# --- Placements --------------------------------------------------------------
+
+Score = Annotated[int, Field(ge=0, le=100)]
+
+
+class PlacementCreate(BaseModel):
+    team_id: int
+    practice_id: int
+    adoption: Score | None = None
+    value: Score | None = None
+    removed: bool = False
+    effective_at: AwareDatetime | None = None
+
+    @model_validator(mode="after")
+    def _position_required(self) -> "PlacementCreate":
+        if not self.removed and (self.adoption is None or self.value is None):
+            raise ValueError("adoption and value are required unless removed is true")
+        return self
+
+
+class PlacementOut(ORMModel):
+    id: int
+    team_id: int
+    practice_id: int
+    adoption: int
+    value: int
+    removed: bool
+    effective_at: datetime
+    recorded_at: datetime
+    edited_by: str | None
