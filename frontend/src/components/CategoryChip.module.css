@@ -1,0 +1,6 @@
+.chip {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  border: 1px solid var(--border); border-radius: 999px;
+  padding: 0 var(--space-2); font-size: 12px;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--chip); }

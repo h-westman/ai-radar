@@ -1,0 +1,12 @@
+.shell { display: flex; flex-direction: column; min-height: 100%; }
+.header {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.brand { font-weight: 700; color: var(--text); text-decoration: none; }
+.nav { display: flex; gap: var(--space-3); }
+.nav a { color: var(--text-muted); text-decoration: none; }
+.nav a[aria-current='page'] { color: var(--text); font-weight: 600; }
+.nameChip { margin-left: auto; border-radius: 999px; }
+.main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
