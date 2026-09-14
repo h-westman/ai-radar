@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,7 @@ from app.schemas import (
     PracticeUpdate,
 )
 from app.services.revisions import record_revision, serialize
+from app.services.similarity import similar_practices
 from app.services.slugs import slugify
 
 router = APIRouter(prefix="/practices", tags=["practices"])
@@ -58,6 +61,13 @@ def list_practices(
     if tag:
         stmt = stmt.where(Practice.tags.any(tag))
     return list(session.scalars(stmt))
+
+
+@router.get("/similar", response_model=list[PracticeListItem])
+def similar(
+    session: SessionDep, name: Annotated[str, Query(min_length=2, max_length=100)]
+) -> list[Practice]:
+    return similar_practices(session, name.strip())
 
 
 @router.post("", response_model=PracticeOut, status_code=201)
