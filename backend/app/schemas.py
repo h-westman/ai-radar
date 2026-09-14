@@ -164,3 +164,20 @@ class PlacementOut(ORMModel):
     effective_at: datetime
     recorded_at: datetime
     edited_by: str | None
+
+
+# --- Team notes --------------------------------------------------------------
+
+
+class NoteOut(ORMModel):
+    team_id: int
+    practice_id: int
+    body_md: str
+    version: int
+    updated_at: datetime
+    edited_by: str | None
+
+
+class NotePut(BaseModel):
+    version: int = Field(ge=0)
+    body_md: Markdown
