@@ -1,32 +1,24 @@
-# React + TypeScript + Vite
+# AI Radar frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A React 19 + TypeScript + Vite single-page app, using TanStack Query for data
+fetching and React Router for routing.
 
-Currently, two official plugins are available:
+## Setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+This machine's local Node is newer than the version CI pins (CI uses Node 22
+LTS; local development here runs on Node 25), and `npm test` needs
+`NODE_OPTIONS=--no-experimental-webstorage` to work around a Node 25
+`localStorage` behavior change — the `test` script already sets this for you.
+`.npmrc` sets `legacy-peer-deps=true` so `npm install` resolves peer
+dependencies the same way in CI and locally.
 
-## React Compiler
+## npm scripts
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+- `npm run dev` — start the Vite dev server.
+- `npm test` — run the Vitest suite (Vitest + Testing Library + MSW, jsdom).
+- `npm run typecheck` — type-check the project with `tsc -b`.
+- `npm run build` — type-check and build the production bundle.
+- `npm run gen:api` — regenerate `openapi.json` and `src/api/schema.d.ts` from
+  the backend's OpenAPI spec.
+- `npm run check:api` — regenerate the API types and fail if they differ from
+  what's committed, to catch a frontend that has drifted from the backend API.
