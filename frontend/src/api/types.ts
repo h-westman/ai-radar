@@ -1,0 +1,26 @@
+import type { components } from './schema'
+
+type S = components['schemas']
+
+export type Team = S['TeamOut']
+export type TeamCreate = S['TeamCreate']
+export type TeamUpdate = S['TeamUpdate']
+export type Practice = S['PracticeOut']
+export type PracticeDetail = S['PracticeDetail']
+export type PracticeListItem = S['PracticeListItem']
+export type PracticeCreate = S['PracticeCreate']
+export type PracticeUpdate = S['PracticeUpdate']
+export type PracticeTeamUsage = S['PracticeTeamUsage']
+export type Category = Practice['category']
+export type Link = Practice['links'][number]
+export type Note = S['NoteOut']
+export type Placement = S['PlacementOut']
+export type PlacementCreate = S['PlacementCreate']
+export type Revision = S['RevisionOut']
+export type EntityType = Revision['entity_type']
+export type FramesResponse = S['FramesOut']
+export type Frame = FramesResponse['frames'][number]
+export type Point = Frame['points'][number]
+export type Step = FramesResponse['step']
+
+export const CATEGORIES: Category[] = ['tool', 'skill', 'practice', 'workflow']
