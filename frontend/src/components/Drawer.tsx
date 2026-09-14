@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { Link } from 'react-router'
-import { conflictCurrent, isConflict } from '../api/client'
+import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import { keys, useNote, usePutNote } from '../api/hooks'
 import type { Category, Note } from '../api/types'
 import type { PositionLabel } from '../chart/geometry'
@@ -41,7 +41,9 @@ export default function Drawer({ scope, practice, label, teamId, teams, canRemov
       <p>
         Position: <strong>{label}</strong>
       </p>
-      {scope === 'team' && teamId !== undefined && <TeamNote teamId={teamId} practiceId={practice.id} />}
+      {scope === 'team' && teamId !== undefined && (
+        <TeamNote key={`${teamId}:${practice.id}`} teamId={teamId} practiceId={practice.id} />
+      )}
       {scope === 'org' && (
         <section>
           <h3>Teams using it</h3>
@@ -84,7 +86,11 @@ function TeamNote({ teamId, practiceId }: { teamId: number; practiceId: number }
         queryClient.setQueryData(keys.note(teamId, practiceId), conflictCurrent<Note>(error))
         setConflict(true)
       } else {
-        toast({ message: 'Could not save the note. Please try again.', tone: 'error' })
+        const message = validationMessage(error)
+        toast({
+          message: message ? `Could not save: ${message}` : 'Could not save the note. Please try again.',
+          tone: 'error',
+        })
       }
     }
   }

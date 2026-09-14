@@ -1,15 +1,37 @@
-import { screen, waitFor } from '@testing-library/react'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { render as baseRender, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
+import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { EDITOR_MODE_KEY } from '../editor/Editor'
 import { setEditedBy } from '../lib/editedBy'
 import { note } from '../test/fixtures'
-import { renderWithProviders } from '../test/render'
+import { createTestQueryClient, renderWithProviders } from '../test/render'
 import { server } from '../test/server'
-import Drawer from './Drawer'
+import { NamePromptProvider } from './NamePrompt'
+import { ToastProvider } from './Toasts'
+import Drawer, { type DrawerPractice } from './Drawer'
 
 const practice = { id: 10, name: 'Claude Code', slug: 'claude-code', category: 'tool' as const, summary: 'Agentic coding.' }
+const otherPractice: DrawerPractice = { id: 11, name: 'Other Practice', slug: 'other-practice', category: 'tool', summary: 'Something else.' }
+
+function renderDrawerHarness(practiceProp: DrawerPractice) {
+  const client = createTestQueryClient()
+  const tree = (p: DrawerPractice) => (
+    <QueryClientProvider client={client}>
+      <ToastProvider>
+        <NamePromptProvider>
+          <MemoryRouter>
+            <Drawer scope="team" practice={p} label="Core" teamId={1} canRemove onRemove={() => {}} onClose={() => {}} />
+          </MemoryRouter>
+        </NamePromptProvider>
+      </ToastProvider>
+    </QueryClientProvider>
+  )
+  const utils = baseRender(tree(practiceProp))
+  return { ...utils, rerenderWith: (p: DrawerPractice) => utils.rerender(tree(p)) }
+}
 
 beforeEach(() => {
   setEditedBy('Kim')
@@ -71,6 +93,31 @@ describe('Drawer', () => {
     expect(await screen.findByText(/someone else saved this note/i)).toBeInTheDocument()
     expect(screen.getByText('Their text')).toBeInTheDocument()
     expect(screen.getByRole('textbox', { name: 'How we use it' })).toHaveValue('We use it for refactors. mine')
+  })
+
+  it('does not leak a note draft to a different practice when the drawer re-renders', async () => {
+    let putCalled = false
+    server.use(
+      http.get('/api/teams/1/notes/10', () => HttpResponse.json(note())),
+      http.get('/api/teams/1/notes/11', () =>
+        HttpResponse.json(note({ practice_id: 11, body_md: 'Their note for the other practice.' })),
+      ),
+      http.put('/api/teams/1/notes/:practiceId', () => {
+        putCalled = true
+        return HttpResponse.json(note())
+      }),
+    )
+    const { rerenderWith } = renderDrawerHarness(practice)
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit note' }))
+    const textarea = screen.getByRole('textbox', { name: 'How we use it' })
+    await userEvent.type(textarea, ' plus a draft for practice 10')
+
+    rerenderWith(otherPractice)
+
+    expect(await screen.findByRole('button', { name: 'Edit note' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'How we use it' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Their note for the other practice.')).toBeInTheDocument()
+    expect(putCalled).toBe(false)
   })
 
   it('lists teams in the org scope without remove', () => {
