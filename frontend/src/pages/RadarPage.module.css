@@ -1,0 +1,9 @@
+.layout { display: flex; flex: 1; min-height: 0; }
+.center { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.toolbar { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); }
+.toolbar h1 { font-size: 18px; margin: 0 auto 0 0; }
+.chartArea { position: relative; flex: 1; display: flex; padding: 0 var(--space-2); min-height: 0; }
+.empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--text-muted); pointer-events: none; text-align: center; }
+.pastBanner { margin: 0 var(--space-4) var(--space-2); padding: var(--space-1) var(--space-3); border-radius: var(--radius-sm); color: var(--edit-past); border: 1px solid var(--edit-past); }
+.archived { color: var(--text-muted); font-size: 12px; }
+.message { padding: var(--space-6); }

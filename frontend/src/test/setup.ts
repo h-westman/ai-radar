@@ -19,6 +19,25 @@ if (typeof globalThis.DragEvent === 'undefined') {
   globalThis.DragEvent = DragEvent as unknown as typeof globalThis.DragEvent
 }
 
+// jsdom has no window.matchMedia. RadarPage uses it to detect prefers-reduced-motion and
+// skip D3 transitions; without a stub, matchMedia is undefined so transitions always run,
+// and jsdom's incomplete SVG transform support throws inside D3's transition tweening.
+// Stubbing it as "reduced motion" makes RadarPage use duration 0 (synchronous) in tests.
+if (typeof window.matchMedia === 'undefined') {
+  window.matchMedia = (query: string) => ({
+    matches: query.includes('prefers-reduced-motion: reduce'),
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent() {
+      return false
+    },
+  })
+}
+
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
 afterEach(() => {
   cleanup()
