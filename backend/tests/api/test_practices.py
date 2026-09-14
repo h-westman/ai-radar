@@ -54,6 +54,23 @@ def test_duplicate_name_conflicts_even_when_archived(client):
     assert response.json()["current"]["id"] == first["id"]
 
 
+def test_unicode_case_fold_conflicts_at_the_db(client):
+    create(client, name="istanbul")
+    response = create(client, name="İstanbul")
+    assert response.status_code == 409
+
+
+def test_integrity_race_returns_409(client, monkeypatch):
+    import app.routers.practices as practices_router
+
+    monkeypatch.setattr(practices_router, "ensure_practice_name_free", lambda *a, **k: None)
+    create(client)
+    response = create(client)
+    assert response.status_code == 409
+    assert response.json()["current"] is None
+    assert client.get("/api/practices").status_code == 200
+
+
 def test_get_practice_and_404(client):
     practice = create(client).json()
     assert client.get(f"/api/practices/{practice['id']}").json()["name"] == "Claude Code"

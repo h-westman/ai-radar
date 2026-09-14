@@ -21,7 +21,7 @@ def get_team_or_404(session: Session, team_id: int, *, lock: bool = False) -> Te
 
 
 def ensure_team_name_free(session: Session, name: str, exclude_id: int | None = None) -> None:
-    stmt = select(Team).where(func.lower(Team.name) == name.lower())
+    stmt = select(Team).where(func.lower(Team.name) == func.lower(name))
     if exclude_id is not None:
         stmt = stmt.where(Team.id != exclude_id)
     if existing := session.scalars(stmt).first():

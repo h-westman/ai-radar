@@ -106,6 +106,24 @@ def test_archive_and_restore(client, session):
     assert actions == ["create", "archive", "restore"]
 
 
+def test_unicode_case_fold_conflicts_at_the_db(client):
+    create(client, "istanbul")
+    response = create(client, "İstanbul")
+    assert response.status_code == 409
+
+
+def test_integrity_race_returns_409(client, monkeypatch):
+    import app.routers.teams as teams_router
+
+    monkeypatch.setattr(teams_router, "ensure_team_name_free", lambda *a, **k: None)
+    create(client, "Platform")
+    response = create(client, "Platform")
+    assert response.status_code == 409
+    assert response.json()["current"] is None
+    # session still usable afterward
+    assert client.get("/api/teams").status_code == 200
+
+
 def test_unknown_team_is_404(client):
     assert client.get("/api/teams/999999").status_code == 404
     assert client.patch("/api/teams/999999", json={"version": 1}).status_code == 404

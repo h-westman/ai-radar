@@ -1,9 +1,11 @@
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from sqlalchemy.exc import IntegrityError
 
 from app.config import settings
-from app.errors import ConflictError, conflict_handler
+from app.deps import stash_session
+from app.errors import ConflictError, conflict_handler, integrity_error_handler
 from app.middleware import BodySizeLimitMiddleware, WriteRateLimitMiddleware
 from app.routers import health, notes, placements, practices, radar, revisions, teams
 from app.spa import mount_spa
@@ -17,8 +19,9 @@ def create_app(
     max_body_bytes: int = settings.max_body_bytes,
     static_dir: Path = DEFAULT_STATIC_DIR,
 ) -> FastAPI:
-    app = FastAPI(title="AI Radar")
+    app = FastAPI(title="AI Radar", dependencies=[Depends(stash_session)])
     app.add_exception_handler(ConflictError, conflict_handler)
+    app.add_exception_handler(IntegrityError, integrity_error_handler)
     for router in (
         health.router,
         teams.router,

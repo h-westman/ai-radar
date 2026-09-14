@@ -34,7 +34,7 @@ def get_practice_or_404(session: Session, practice_id: int, *, lock: bool = Fals
 
 
 def ensure_practice_name_free(session: Session, name: str, exclude_id: int | None = None) -> None:
-    stmt = select(Practice).where(func.lower(Practice.name) == name.lower())
+    stmt = select(Practice).where(func.lower(Practice.name) == func.lower(name))
     if exclude_id is not None:
         stmt = stmt.where(Practice.id != exclude_id)
     if existing := session.scalars(stmt).first():
