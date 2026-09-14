@@ -44,3 +44,9 @@ def test_path_traversal_falls_back_to_index(session, static_dir):
 
 def test_no_catch_all_without_a_build(session, tmp_path):
     assert make_client(session, tmp_path / "missing").get("/").status_code == 404
+
+
+def test_null_byte_path_falls_back_to_index(session, static_dir):
+    response = make_client(session, static_dir).get("/%00")
+    assert response.status_code == 200
+    assert response.text == "<div id=root></div>"

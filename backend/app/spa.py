@@ -14,7 +14,11 @@ def mount_spa(app: FastAPI, static_dir: Path) -> None:
     def spa(full_path: str) -> FileResponse:
         if full_path == "api" or full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="Not Found")
-        candidate = (root / full_path).resolve()
-        if full_path and candidate.is_file() and candidate.is_relative_to(root):
+        try:
+            candidate = (root / full_path).resolve()
+            is_match = full_path and candidate.is_file() and candidate.is_relative_to(root)
+        except (ValueError, OSError):
+            is_match = False
+        if is_match:
             return FileResponse(candidate)
         return FileResponse(index)
