@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/frames": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Frames */
+        get: operations["get_frames_api_frames_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -125,17 +142,88 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/radar/frames": {
+    "/api/radars": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Get Frames */
-        get: operations["get_frames_api_radar_frames_get"];
+        /** List Radars */
+        get: operations["list_radars_api_radars_get"];
+        put?: never;
+        /** Create Radar */
+        post: operations["create_radar_api_radars_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/radars/{radar_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Radar */
+        get: operations["get_radar_api_radars__radar_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Radar */
+        patch: operations["update_radar_api_radars__radar_id__patch"];
+        trace?: never;
+    };
+    "/api/radars/{radar_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Radar */
+        post: operations["archive_radar_api_radars__radar_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/radars/{radar_id}/notes/{practice_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Note */
+        get: operations["get_note_api_radars__radar_id__notes__practice_id__get"];
+        /** Put Note */
+        put: operations["put_note_api_radars__radar_id__notes__practice_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/radars/{radar_id}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore Radar */
+        post: operations["restore_radar_api_radars__radar_id__restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -170,94 +258,6 @@ export interface paths {
         put?: never;
         /** Revert */
         post: operations["revert_api_revisions__revision_id__revert_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/teams": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** List Teams */
-        get: operations["list_teams_api_teams_get"];
-        put?: never;
-        /** Create Team */
-        post: operations["create_team_api_teams_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/teams/{team_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Team */
-        get: operations["get_team_api_teams__team_id__get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Update Team */
-        patch: operations["update_team_api_teams__team_id__patch"];
-        trace?: never;
-    };
-    "/api/teams/{team_id}/archive": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Archive Team */
-        post: operations["archive_team_api_teams__team_id__archive_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/teams/{team_id}/notes/{practice_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Note */
-        get: operations["get_note_api_teams__team_id__notes__practice_id__get"];
-        /** Put Note */
-        put: operations["put_note_api_teams__team_id__notes__practice_id__put"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/teams/{team_id}/restore": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Restore Team */
-        post: operations["restore_team_api_teams__team_id__restore_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -317,8 +317,8 @@ export interface components {
             edited_by: string | null;
             /** Practice Id */
             practice_id: number;
-            /** Team Id */
-            team_id: number;
+            /** Radar Id */
+            radar_id: number;
             /**
              * Updated At
              * Format: date-time
@@ -342,13 +342,13 @@ export interface components {
             effective_at?: string | null;
             /** Practice Id */
             practice_id: number;
+            /** Radar Id */
+            radar_id: number;
             /**
              * Removed
              * @default false
              */
             removed?: boolean;
-            /** Team Id */
-            team_id: number;
             /** Value */
             value?: number | null;
         };
@@ -367,6 +367,8 @@ export interface components {
             id: number;
             /** Practice Id */
             practice_id: number;
+            /** Radar Id */
+            radar_id: number;
             /**
              * Recorded At
              * Format: date-time
@@ -374,8 +376,6 @@ export interface components {
             recorded_at: string;
             /** Removed */
             removed: boolean;
-            /** Team Id */
-            team_id: number;
             /** Value */
             value: number;
         };
@@ -385,10 +385,10 @@ export interface components {
             adoption: number;
             /** Practice Id */
             practice_id: number;
-            /** Team Positions */
-            team_positions?: components["schemas"]["TeamPositionOut"][] | null;
-            /** Teams */
-            teams: number;
+            /** Radar Positions */
+            radar_positions?: components["schemas"]["RadarPositionOut"][] | null;
+            /** Radars */
+            radars: number;
             /** Value */
             value: number;
         };
@@ -444,14 +444,12 @@ export interface components {
             links: components["schemas"]["Link"][];
             /** Name */
             name: string;
-            /** Slug */
-            slug: string;
+            /** Radars */
+            radars: components["schemas"]["PracticeRadarUsage"][];
             /** Summary */
             summary: string;
             /** Tags */
             tags: string[];
-            /** Teams */
-            teams: components["schemas"]["PracticeTeamUsage"][];
             /**
              * Updated At
              * Format: date-time
@@ -473,17 +471,15 @@ export interface components {
             id: number;
             /** Name */
             name: string;
-            /** Slug */
-            slug: string;
+            /**
+             * Radars Count
+             * @default 0
+             */
+            radars_count?: number;
             /** Summary */
             summary: string;
             /** Tags */
             tags: string[];
-            /**
-             * Teams Count
-             * @default 0
-             */
-            teams_count?: number;
         };
         /** PracticeOut */
         PracticeOut: {
@@ -507,8 +503,6 @@ export interface components {
             links: components["schemas"]["Link"][];
             /** Name */
             name: string;
-            /** Slug */
-            slug: string;
             /** Summary */
             summary: string;
             /** Tags */
@@ -521,6 +515,17 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** PracticeRadarUsage */
+        PracticeRadarUsage: {
+            /** Label */
+            label: string;
+            /** Note Md */
+            note_md: string | null;
+            /** Radar Id */
+            radar_id: number;
+            /** Radar Name */
+            radar_name: string;
+        };
         /** PracticeRef */
         PracticeRef: {
             /**
@@ -530,19 +535,6 @@ export interface components {
             category: "tool" | "skill" | "practice" | "workflow";
             /** Name */
             name: string;
-        };
-        /** PracticeTeamUsage */
-        PracticeTeamUsage: {
-            /** Label */
-            label: string;
-            /** Note Md */
-            note_md: string | null;
-            /** Team Id */
-            team_id: number;
-            /** Team Name */
-            team_name: string;
-            /** Team Slug */
-            team_slug: string;
         };
         /** PracticeUpdate */
         PracticeUpdate: {
@@ -561,6 +553,54 @@ export interface components {
             /** Version */
             version: number;
         };
+        /** RadarCreate */
+        RadarCreate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name: string;
+        };
+        /** RadarOut */
+        RadarOut: {
+            /** Archived At */
+            archived_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Description */
+            description: string | null;
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Version */
+            version: number;
+        };
+        /** RadarPositionOut */
+        RadarPositionOut: {
+            /** Adoption */
+            adoption: number;
+            /** Radar Id */
+            radar_id: number;
+            /** Value */
+            value: number;
+        };
+        /** RadarUpdate */
+        RadarUpdate: {
+            /** Description */
+            description?: string | null;
+            /** Name */
+            name?: string | null;
+            /** Version */
+            version: number;
+        };
         /** RevertOut */
         RevertOut: {
             /** Entity */
@@ -571,7 +611,7 @@ export interface components {
              * Entity Type
              * @enum {string}
              */
-            entity_type: "team" | "practice" | "team_note";
+            entity_type: "radar" | "practice" | "radar_note";
         };
         /** RevisionOut */
         RevisionOut: {
@@ -590,63 +630,13 @@ export interface components {
              * Entity Type
              * @enum {string}
              */
-            entity_type: "team" | "practice" | "team_note";
+            entity_type: "radar" | "practice" | "radar_note";
             /** Id */
             id: number;
             /** Snapshot */
             snapshot: {
                 [key: string]: unknown;
             };
-        };
-        /** TeamCreate */
-        TeamCreate: {
-            /** Description */
-            description?: string | null;
-            /** Name */
-            name: string;
-        };
-        /** TeamOut */
-        TeamOut: {
-            /** Archived At */
-            archived_at: string | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /** Description */
-            description: string | null;
-            /** Id */
-            id: number;
-            /** Name */
-            name: string;
-            /** Slug */
-            slug: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-            /** Version */
-            version: number;
-        };
-        /** TeamPositionOut */
-        TeamPositionOut: {
-            /** Adoption */
-            adoption: number;
-            /** Team Id */
-            team_id: number;
-            /** Value */
-            value: number;
-        };
-        /** TeamUpdate */
-        TeamUpdate: {
-            /** Description */
-            description?: string | null;
-            /** Name */
-            name?: string | null;
-            /** Version */
-            version: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -670,6 +660,40 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    get_frames_api_frames_get: {
+        parameters: {
+            query?: {
+                scope?: string;
+                step?: "week" | "month";
+                from?: string | null;
+                to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FramesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     health_api_health_get: {
         parameters: {
             query?: never;
@@ -961,13 +985,10 @@ export interface operations {
             };
         };
     };
-    get_frames_api_radar_frames_get: {
+    list_radars_api_radars_get: {
         parameters: {
             query?: {
-                scope?: string;
-                step?: "week" | "month";
-                from?: string | null;
-                to?: string | null;
+                include_archived?: boolean;
             };
             header?: never;
             path?: never;
@@ -981,7 +1002,246 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FramesOut"];
+                    "application/json": components["schemas"]["RadarOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_radar_api_radars_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-edited-by"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RadarCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_radar_api_radars__radar_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                radar_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_radar_api_radars__radar_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-edited-by"?: string | null;
+            };
+            path: {
+                radar_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RadarUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    archive_radar_api_radars__radar_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-edited-by"?: string | null;
+            };
+            path: {
+                radar_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadarOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_note_api_radars__radar_id__notes__practice_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                radar_id: number;
+                practice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_note_api_radars__radar_id__notes__practice_id__put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-edited-by"?: string | null;
+            };
+            path: {
+                radar_id: number;
+                practice_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotePut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    restore_radar_api_radars__radar_id__restore_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-edited-by"?: string | null;
+            };
+            path: {
+                radar_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadarOut"];
                 };
             };
             /** @description Validation Error */
@@ -998,7 +1258,7 @@ export interface operations {
     list_revisions_api_revisions_get: {
         parameters: {
             query: {
-                entity_type: "team" | "practice" | "team_note";
+                entity_type: "radar" | "practice" | "radar_note";
                 entity_id: string;
             };
             header?: never;
@@ -1047,276 +1307,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RevertOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    list_teams_api_teams_get: {
-        parameters: {
-            query?: {
-                include_archived?: boolean;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_team_api_teams_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-edited-by"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TeamCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_team_api_teams__team_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                team_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_team_api_teams__team_id__patch: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-edited-by"?: string | null;
-            };
-            path: {
-                team_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TeamUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    archive_team_api_teams__team_id__archive_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-edited-by"?: string | null;
-            };
-            path: {
-                team_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_note_api_teams__team_id__notes__practice_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                team_id: number;
-                practice_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NoteOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    put_note_api_teams__team_id__notes__practice_id__put: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-edited-by"?: string | null;
-            };
-            path: {
-                team_id: number;
-                practice_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NotePut"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["NoteOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    restore_team_api_teams__team_id__restore_post: {
-        parameters: {
-            query?: never;
-            header?: {
-                "x-edited-by"?: string | null;
-            };
-            path: {
-                team_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TeamOut"];
                 };
             };
             /** @description Validation Error */
