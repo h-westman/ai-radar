@@ -1,4 +1,4 @@
-from tests.factories import make_practice, make_team
+from tests.factories import make_practice, make_radar
 
 
 def history(client, entity_type, entity_id):
@@ -52,7 +52,7 @@ def test_revert_team_restores_name_and_slug(client):
 
 
 def test_revert_note(client, session):
-    team_id, practice_id = make_team(session).id, make_practice(session).id
+    team_id, practice_id = make_radar(session).id, make_practice(session).id
     note_url = f"/api/teams/{team_id}/notes/{practice_id}"
     client.put(note_url, json={"version": 0, "body_md": "first"})
     client.put(note_url, json={"version": 1, "body_md": "second"})

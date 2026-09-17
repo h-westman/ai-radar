@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from app.clock import utcnow
 from app.models import TeamNote
-from tests.factories import make_placement, make_practice, make_team
+from tests.factories import make_placement, make_practice, make_radar
 
 
 def ago(hours):
@@ -10,8 +10,8 @@ def ago(hours):
 
 
 def test_list_counts_teams_currently_using_each_practice(client, session):
-    platform, payments = make_team(session, "Platform"), make_team(session, "Payments")
-    archived = make_team(session, "Old", archived_at=utcnow())
+    platform, payments = make_radar(session, "Platform"), make_radar(session, "Payments")
+    archived = make_radar(session, "Old", archived_at=utcnow())
     x, y, z = (make_practice(session, n) for n in ("X tool", "Y tool", "Z tool"))
     make_placement(session, platform, x, effective_at=ago(3))
     make_placement(session, payments, x, effective_at=ago(3))
@@ -25,7 +25,7 @@ def test_list_counts_teams_currently_using_each_practice(client, session):
 
 
 def test_similar_includes_team_counts(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     practice = make_practice(session, "GitHub Copilot")
     make_placement(session, team, practice, effective_at=ago(1))
     [match] = client.get("/api/practices/similar", params={"name": "copilot"}).json()
@@ -33,8 +33,8 @@ def test_similar_includes_team_counts(client, session):
 
 
 def test_detail_lists_teams_with_labels_and_notes(client, session):
-    payments, platform = make_team(session, "payments"), make_team(session, "Platform")
-    mobile = make_team(session, "Mobile")
+    payments, platform = make_radar(session, "payments"), make_radar(session, "Platform")
+    mobile = make_radar(session, "Mobile")
     practice = make_practice(session)
     make_placement(session, platform, practice, adoption=80, value=90, effective_at=ago(2))
     make_placement(session, payments, practice, adoption=20, value=70, effective_at=ago(2))

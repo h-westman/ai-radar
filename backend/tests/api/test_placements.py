@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.clock import utcnow
-from tests.factories import make_placement, make_practice, make_team
+from tests.factories import make_placement, make_practice, make_radar
 
 
 @pytest.fixture
 def team(session):
-    return make_team(session)
+    return make_radar(session)
 
 
 @pytest.fixture

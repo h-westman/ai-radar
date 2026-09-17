@@ -1,11 +1,11 @@
 import pytest
 
-from tests.factories import make_practice, make_team, revisions_for
+from tests.factories import make_practice, make_radar, revisions_for
 
 
 @pytest.fixture
 def ids(session):
-    return make_team(session).id, make_practice(session).id
+    return make_radar(session).id, make_practice(session).id
 
 
 def url(team_id, practice_id):

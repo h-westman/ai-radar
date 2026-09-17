@@ -21,12 +21,11 @@ CATEGORIES = ("tool", "skill", "practice", "workflow")
 # Indexes and CHECK constraints are defined in migrations/versions/*.py only.
 
 
-class Team(Base):
-    __tablename__ = "teams"
+class Radar(Base):
+    __tablename__ = "radars"
 
     id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
-    slug: Mapped[str] = mapped_column(String(120))
     description: Mapped[str | None] = mapped_column(Text, default=None)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -39,7 +38,6 @@ class Practice(Base):
 
     id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
     name: Mapped[str] = mapped_column(String(100))
-    slug: Mapped[str] = mapped_column(String(120))
     category: Mapped[str] = mapped_column(String(20))
     summary: Mapped[str] = mapped_column(String(280), default="")
     body_md: Mapped[str] = mapped_column(Text, default="")
@@ -51,10 +49,10 @@ class Practice(Base):
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), default=None)
 
 
-class TeamNote(Base):
-    __tablename__ = "team_notes"
+class RadarNote(Base):
+    __tablename__ = "radar_notes"
 
-    team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"), primary_key=True)
+    radar_id: Mapped[int] = mapped_column(ForeignKey("radars.id"), primary_key=True)
     practice_id: Mapped[int] = mapped_column(ForeignKey("practices.id"), primary_key=True)
     body_md: Mapped[str] = mapped_column(Text, default="")
     version: Mapped[int] = mapped_column(Integer, default=1)
@@ -66,7 +64,7 @@ class Placement(Base):
     __tablename__ = "placements"
 
     id: Mapped[int] = mapped_column(Integer, Identity(), primary_key=True)
-    team_id: Mapped[int] = mapped_column(ForeignKey("teams.id"))
+    radar_id: Mapped[int] = mapped_column(ForeignKey("radars.id"))
     practice_id: Mapped[int] = mapped_column(ForeignKey("practices.id"))
     adoption: Mapped[int] = mapped_column(SmallInteger)
     value: Mapped[int] = mapped_column(SmallInteger)

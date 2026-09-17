@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 
 from app.clock import utcnow
-from tests.factories import make_placement, make_practice, make_team
+from tests.factories import make_placement, make_practice, make_radar
 
 
 def d(y, m, day):
@@ -15,7 +15,7 @@ def frames(client, **params):
 
 
 def test_team_scope_frames(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     x, y = make_practice(session, "X tool"), make_practice(session, "Y tool")
     make_placement(session, team, x, adoption=70, value=80, effective_at=d(2025, 1, 15))
     make_placement(session, team, x, adoption=75, value=85, effective_at=d(2025, 2, 10))
@@ -48,7 +48,7 @@ def test_team_scope_frames(client, session):
 
 
 def test_org_scope_aggregates_with_team_positions(client, session):
-    a, b = make_team(session, "A"), make_team(session, "B")
+    a, b = make_radar(session, "A"), make_radar(session, "B")
     x = make_practice(session)
     make_placement(session, a, x, adoption=80, value=90, effective_at=d(2025, 1, 10))
     make_placement(session, b, x, adoption=40, value=70, effective_at=d(2025, 1, 10))
@@ -69,7 +69,7 @@ def test_org_scope_aggregates_with_team_positions(client, session):
 
 
 def test_org_default_range_runs_from_earliest_placement_to_now(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     make_placement(session, team, make_practice(session), effective_at=d(2025, 11, 10))
     before = utcnow()
     body = frames(client).json()
@@ -79,7 +79,7 @@ def test_org_default_range_runs_from_earliest_placement_to_now(client, session):
 
 
 def test_team_default_range_covers_at_least_the_last_year(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     make_placement(session, team, make_practice(session))  # placed just now
     body = frames(client, scope=f"team:{team.id}").json()
     assert len(body["frames"]) >= 12
@@ -88,7 +88,7 @@ def test_team_default_range_covers_at_least_the_last_year(client, session):
 
 
 def test_weekly_step(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     make_placement(session, team, make_practice(session), effective_at=d(2025, 1, 6))
     body = frames(
         client,
@@ -101,7 +101,7 @@ def test_weekly_step(client, session):
 
 
 def test_archived_practices_are_excluded(client, session):
-    team = make_team(session)
+    team = make_radar(session)
     x = make_practice(session, archived_at=utcnow())
     make_placement(session, team, x, effective_at=d(2025, 1, 10))
     body = frames(client, **{"from": "2025-01-01T00:00:00Z"}, to="2025-01-20T00:00:00Z").json()
