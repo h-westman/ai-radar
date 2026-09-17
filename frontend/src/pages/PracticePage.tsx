@@ -25,13 +25,13 @@ import { useToast } from '../components/Toasts'
 import UnsavedChangesBar from '../components/UnsavedChangesBar'
 import Editor from '../editor/Editor'
 import MarkdownView from '../editor/MarkdownView'
+import { categoryOptionText } from '../lib/categories'
 import { idFromRef, toRef } from '../lib/refs'
 import styles from './Pages.module.css'
 
 type Field = 'name' | 'category' | 'summary' | 'tags' | 'links' | 'body_md'
 type Draft = Partial<Pick<Practice, Field>>
 
-const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 const parseTags = (text: string) => [...new Set(text.split(',').map((t) => t.trim()).filter(Boolean))]
 const excerpt = (md: string) =>
   md
@@ -85,7 +85,7 @@ export default function PracticePage() {
           <button onClick={() => toggleArchived(practice)}>Restore practice</button>
         </div>
       )}
-      <div role="tablist" aria-label="Practice sections" className={styles.filters}>
+      <div role="tablist" aria-label="Practice sections" className={styles.tablist}>
         <button role="tab" aria-selected={tab === 'overview'} onClick={() => setParams({})}>
           Overview
         </button>
@@ -263,7 +263,7 @@ function Overview({ practice }: { practice: PracticeDetail }) {
             <select aria-label="Category" value={view.category} onChange={(e) => stage('category', e.target.value as Category)}>
               {CATEGORIES.map((c) => (
                 <option key={c} value={c}>
-                  {capitalize(c)}
+                  {categoryOptionText(c)}
                 </option>
               ))}
             </select>

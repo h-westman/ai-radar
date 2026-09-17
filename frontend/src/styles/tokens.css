@@ -2,26 +2,54 @@
   --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Chart-room instrument palette: cool paper, ink text, teal signal accent. */
-  --bg: #eef1ef;
-  --surface: #fbfdfc;
-  --surface-2: #e1e8e4;
-  --border: #c7d1cb;
-  --text: #121c18;
-  --text-muted: #57685f;
+  /* Neutral instrument palette, after the Volvo Group design system: achromatic
+     chrome, one teal signal accent, four category hues reserved for the chart. */
+  --bg: #f2f2f2;
+  --surface: #ffffff;
+  --surface-2: #e1e1e1;
+  --border: #d0d0d0;
+  --text: #212121;
+  --text-muted: #6b6b6b;
 
   --accent: #0f7a84;
   --accent-contrast: #ffffff;
-  --danger: #c1382f;
-  --success: #1f7a4d;
 
-  /* Legend colours for the radar: each category reads as a distinct hue. */
-  --cat-tool: #3a6ea8;
-  --cat-skill: #3f8f5f;
-  --cat-practice: #c08a2e;
-  --cat-workflow: #7c5fa8;
-  /* Rose/mauve: sits apart from all four category hues, marks "edited in the past". */
-  --edit-past: #af3f6b;
+  /* Links, from the Volvo Group system. Deliberately darker than the blue used
+     for the "tool" category so a chip dot never reads as a link. */
+  --link: #2a609d;
+  --link-hover: #4781c4;
+  --link-visited: #396976;
+  --danger: #bf2012;
+  --danger-subtle: #f8dddb;
+  --success: #177844;
+  --success-subtle: #d8efde;
+  --warning: #ad5100;
+  --warning-subtle: #fff3de;
+
+  /* Ink, not a hue: a selected bubble's ring must stay visible on every category colour. */
+  --selected: #212121;
+  --border-tab: #212121;
+  --border-input-active: #2a609d;
+
+  /* Buttons. Kept separate from --accent, which also draws links, the focus ring
+     and the chart's selection ring; those must stay visible against every surface. */
+  --button-bg: #212121;
+  --button-text: #ffffff;
+  --button-bg-hover: #333333;
+  --button-bg-pressed: #3d3d3d;
+  --button-disabled-bg: #e1e1e1;
+  --button-disabled-text: #a9a9a9;
+
+  /* Radar categories. Validated as a set with the dataviz validator under --pairs all
+     (every bubble is on screen at once): worst pair CVD dE 9.2, normal-vision 19.8.
+     Do not restep one of these alone - revalidate the four together. */
+  --cat-tool: #2a78d6;
+  --cat-skill: #1baf7a;
+  --cat-practice: #eb6834;
+  --cat-workflow: #a0459b;
+  /* Amber, as the design spec asked: warns that you are editing history. */
+  --edit-past: #ad5100;
+  --edit-past-subtle: #fff3de;
 
   --radius-sm: 4px;
   --radius: 8px;
@@ -31,24 +59,47 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
-  --shadow: 0 6px 20px rgb(15 30 26 / 0.12);
+  --shadow: 0 6px 20px rgb(0 0 0 / 0.12);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d1512;
-    --surface: #16211d;
-    --surface-2: #1e2b26;
-    --border: #33443c;
-    --text: #e7ece9;
-    --text-muted: #93a29b;
+    --bg: #141414;
+    --surface: #212121;
+    --surface-2: #2e2e2e;
+    --border: #4a4a4a;
+    --text: #f5f5f5;
+    --text-muted: #a9a9a9;
     --accent: #22a0ac;
-    --cat-tool: #6b9bd1;
-    --cat-skill: #5cb884;
-    --cat-practice: #e0a94a;
-    --cat-workflow: #a68bd4;
-    --edit-past: #e0749a;
+    --danger: #ff6b54;
+    --danger-subtle: #4c2821;
+    --success: #6cc17a;
+    --success-subtle: #1e3d28;
+    --warning: #ffb54d;
+    --warning-subtle: #593c11;
+    --selected: #ffffff;
+    --border-tab: #ffffff;
+    --border-input-active: #61a0e8;
+    --link: #61a0e8;
+    --link-hover: #7ab3f5;
+    --link-visited: #66b3a6;
+
+    /* Inverted, as the Volvo system does: a light button on a dark surface,
+       because a near-black button on near-black chrome has no contrast. */
+    --button-bg: #ffffff;
+    --button-text: #212121;
+    --button-bg-hover: #e1e1e1;
+    --button-bg-pressed: #a9a9a9;
+    --button-disabled-bg: #3d3d3d;
+    --button-disabled-text: #6b6b6b;
+
+    --cat-tool: #3987e5;
+    --cat-skill: #199e70;
+    --cat-practice: #d95926;
+    --cat-workflow: #b45fae;
+    --edit-past: #ffb54d;
+    --edit-past-subtle: #593c11;
     --shadow: 0 8px 24px rgb(0 0 0 / 0.45);
     color-scheme: dark;
   }

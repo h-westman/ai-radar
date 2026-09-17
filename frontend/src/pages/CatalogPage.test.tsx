@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
+import type { PracticeCreate } from '../api/types'
 import { setEditedBy } from '../lib/editedBy'
 import { detail, listItem, practice } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
@@ -77,6 +78,33 @@ describe('CatalogPage', () => {
     await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'MCP servers')
     await userEvent.click(screen.getByRole('button', { name: 'Create practice' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/practices/42-mcp-servers'))
+  })
+
+  it('creates a practice with the chosen category', async () => {
+    let created: PracticeCreate | undefined
+    server.use(
+      http.get('/api/practices/similar', () => HttpResponse.json([])),
+      http.post('/api/practices', async ({ request }) => {
+        created = (await request.json()) as PracticeCreate
+        return HttpResponse.json(practice({ id: 42, name: 'Daily agent standup', slug: 'daily-agent-standup' }), {
+          status: 201,
+        })
+      }),
+    )
+    renderRoutes('/practices')
+    await userEvent.click(screen.getByRole('button', { name: '+ New practice' }))
+    await userEvent.type(screen.getByRole('textbox', { name: 'Name' }), 'Daily agent standup')
+    await userEvent.click(screen.getByRole('radio', { name: 'Workflow' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Create practice' }))
+    await waitFor(() => expect(created).toMatchObject({ category: 'workflow' }))
+  })
+
+  it('explains each category while you choose one', async () => {
+    renderRoutes('/practices')
+    await userEvent.click(screen.getByRole('button', { name: '+ New practice' }))
+    expect(screen.getByRole('radio', { name: 'Practice' })).toHaveAccessibleDescription(
+      /a habit your team applies while working/i,
+    )
   })
 
   it('offers to restore an archived duplicate', async () => {

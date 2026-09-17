@@ -2,14 +2,13 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import { useCreatePractice, useSetPracticeArchived, useSimilar } from '../api/hooks'
-import { CATEGORIES, type Category, type Practice } from '../api/types'
+import { type Category, type Practice } from '../api/types'
+import CategoryRadios from '../components/CategoryRadios'
 import { useNamePrompt } from '../components/NamePrompt'
 import { useToast } from '../components/Toasts'
 import { toRef } from '../lib/refs'
 import { useDebounced } from '../lib/useDebounced'
 import styles from './Pages.module.css'
-
-const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) {
   const navigate = useNavigate()
@@ -77,16 +76,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
           </ul>
         </div>
       )}
-      <label>
-        Category
-        <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {capitalize(c)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <CategoryRadios value={category} onChange={setCategory} />
       <label>
         Summary
         <input value={summary} maxLength={280} onChange={(e) => setSummary(e.target.value)} />

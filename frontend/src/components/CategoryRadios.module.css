@@ -1,0 +1,38 @@
+.group {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-2) var(--space-3) var(--space-3);
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.group legend { font-weight: 600; padding: 0 var(--space-1); }
+.option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--space-2);
+  align-items: baseline;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+.option:has(input:checked) { background: var(--surface-2); }
+.option input { margin: 0; justify-self: center; }
+/* Scoped through .option so it out-specifies the `.card label` rule in Pages.module.css,
+   which would otherwise stack the dot above the label text. */
+.option .name {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  cursor: pointer;
+}
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--chip); flex-shrink: 0; }
+.description {
+  grid-column: 2;
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 58ch;
+}

@@ -69,6 +69,15 @@ async function editName(text: string) {
 }
 
 describe('PracticePage', () => {
+  it('explains what each category means while editing one', async () => {
+    open()
+    await userEvent.click(await screen.findByRole('button', { name: 'Edit category' }))
+    const select = screen.getByRole('combobox', { name: 'Category' })
+    expect(
+      within(select).getByRole('option', { name: 'Workflow — a sequence of steps from start to finish' }),
+    ).toBeInTheDocument()
+  })
+
   it('shows the entry and the teams using it', async () => {
     open()
     expect(await screen.findByRole('heading', { name: 'Claude Code' })).toBeInTheDocument()

@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { usePractices } from '../api/hooks'
 import { CATEGORIES, type Category } from '../api/types'
 import CategoryChip from '../components/CategoryChip'
+import { categoryLabel } from '../lib/categories'
 import { toRef } from '../lib/refs'
 import { useDebounced } from '../lib/useDebounced'
 import NewPracticeForm from './NewPracticeForm'
@@ -38,7 +39,7 @@ export default function CatalogPage() {
           <option value="">All categories</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c[0].toUpperCase() + c.slice(1)}
+              {categoryLabel(c)}
             </option>
           ))}
         </select>

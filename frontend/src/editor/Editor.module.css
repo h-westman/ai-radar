@@ -3,10 +3,15 @@
 .modes button { border-radius: 0; }
 .modes button:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
 .modes button:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-.modes button[aria-checked='true'] { background: var(--accent); color: var(--accent-contrast); }
+.modes button[aria-checked='true'] { background: var(--selected); color: var(--surface); border-color: var(--selected); }
 .markdownEditor { display: flex; flex-direction: column; }
-.tabs { display: flex; gap: var(--space-1); }
-.tabs button[aria-selected='true'] { font-weight: 600; background: var(--surface-2); }
+.tabs { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--border); }
+.tabs button {
+  border: none; background: none; border-radius: 0;
+  padding: var(--space-1) 0; margin-bottom: -1px;
+  border-bottom: 2px solid transparent; color: var(--text-muted);
+}
+.tabs button[aria-selected='true'] { border-bottom-color: var(--border-tab); color: var(--text); font-weight: 600; }
 .toolbar { display: flex; gap: var(--space-1); padding: var(--space-1) 0; }
 .textarea { width: 100%; font-family: var(--font-mono); min-height: 200px; resize: vertical; }
 .preview { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--space-3); min-height: 200px; }

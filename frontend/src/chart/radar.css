@@ -12,7 +12,7 @@
 .radar-bubble { cursor: pointer; outline: none; }
 .radar-bubble circle { stroke: var(--surface); stroke-width: 2; opacity: 0.92; }
 .radar-bubble.is-selected circle,
-.radar-bubble:focus-visible circle { stroke: var(--accent); stroke-width: 3; }
+.radar-bubble:focus-visible circle { stroke: var(--selected); stroke-width: 3; }
 .radar-bubble.is-dim circle,
 .radar-bubble.is-dim text { opacity: 0.2; }
 .radar-bubble.is-outside circle { stroke: var(--danger); stroke-dasharray: 3 2; }

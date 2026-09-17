@@ -12,6 +12,7 @@ import { useNamePrompt } from '../components/NamePrompt'
 import Timeline, { FRAME_MS } from '../components/Timeline'
 import { useToast } from '../components/Toasts'
 import Tray from '../components/Tray'
+import { categoryLabel } from '../lib/categories'
 import { idFromRef } from '../lib/refs'
 import { writeString } from '../lib/storage'
 import styles from './RadarPage.module.css'
@@ -211,7 +212,7 @@ export default function RadarPage() {
             <option value="">All categories</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c[0].toUpperCase() + c.slice(1)}
+                {categoryLabel(c)}
               </option>
             ))}
           </select>

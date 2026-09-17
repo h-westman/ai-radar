@@ -7,8 +7,35 @@
 .table { width: 100%; border-collapse: collapse; background: var(--surface); border-radius: var(--radius); overflow: hidden; }
 .table th, .table td { text-align: left; padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border); vertical-align: top; }
 .badge { display: inline-block; margin-left: var(--space-2); font-size: 11px; padding: 0 var(--space-2); border-radius: 999px; background: var(--surface-2); color: var(--text-muted); }
-.tag { font-size: 12px; padding: 0 var(--space-2); margin: 0 var(--space-1) var(--space-1) 0; border-radius: 999px; }
-.error { color: var(--danger); }
+.tag {
+  font-size: 12px; padding: 0 var(--space-2); margin: 0 var(--space-1) var(--space-1) 0;
+  border-radius: 999px; background: var(--surface-2); border-color: transparent; color: var(--text-muted);
+}
+.tag:hover { border-color: var(--border-tab); color: var(--text); background: var(--surface-2); }
+.error {
+  color: var(--danger);
+  background: var(--danger-subtle);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+/* Tabs: an ink underline on the selected tab, after the Volvo border-tab token.
+   Before this the Overview/History tabs had no selected state at all. */
+.tablist { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--border); }
+.tablist button {
+  border: none;
+  background: none;
+  border-radius: 0;
+  padding: var(--space-2) 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted);
+}
+.tablist button[aria-selected='true'] {
+  border-bottom-color: var(--border-tab);
+  color: var(--text);
+  font-weight: 600;
+}
 .muted { color: var(--text-muted); }
 .actions { display: flex; flex-wrap: wrap; gap: var(--space-2); justify-content: flex-end; }
 .similar { background: var(--surface-2); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); }
