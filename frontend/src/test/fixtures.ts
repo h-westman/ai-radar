@@ -4,16 +4,15 @@ import type {
   Practice,
   PracticeDetail,
   PracticeListItem,
+  Radar,
   Revision,
-  Team,
 } from '../api/types'
 
 const T0 = '2026-01-01T00:00:00Z'
 
-export const team = (over: Partial<Team> = {}): Team => ({
+export const radar = (over: Partial<Radar> = {}): Radar => ({
   id: 1,
   name: 'Platform',
-  slug: 'platform',
   description: null,
   version: 1,
   created_at: T0,
@@ -46,18 +45,18 @@ export const listItem = (over: Partial<PracticeListItem> = {}): PracticeListItem
   summary: 'Agentic coding assistant.',
   tags: ['agentic'],
   archived_at: null,
-  teams_count: 0,
+  radars_count: 0,
   ...over,
 })
 
 export const detail = (over: Partial<PracticeDetail> = {}): PracticeDetail => ({
   ...practice(),
-  teams: [],
+  radars: [],
   ...over,
 })
 
 export const note = (over: Partial<Note> = {}): Note => ({
-  team_id: 1,
+  radar_id: 1,
   practice_id: 10,
   body_md: 'We use it for refactors.',
   version: 1,
@@ -78,18 +77,18 @@ export const revision = (over: Partial<Revision> = {}): Revision => ({
 })
 
 export const framesResponse = (over: Partial<FramesResponse> = {}): FramesResponse => ({
-  scope: 'team:1',
+  scope: 'radar:1',
   step: 'month',
   frames: [
     {
       date: '2026-01-31T23:59:59Z',
-      points: [{ practice_id: 10, adoption: 70, value: 80, teams: 1 }],
+      points: [{ practice_id: 10, adoption: 70, value: 80, radars: 1 }],
     },
     {
       date: '2026-02-28T23:59:59Z',
       points: [
-        { practice_id: 10, adoption: 75, value: 85, teams: 1 },
-        { practice_id: 11, adoption: 20, value: 60, teams: 1 },
+        { practice_id: 10, adoption: 75, value: 85, radars: 1 },
+        { practice_id: 11, adoption: 20, value: 60, radars: 1 },
       ],
     },
   ],
