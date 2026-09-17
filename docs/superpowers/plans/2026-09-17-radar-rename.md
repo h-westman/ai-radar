@@ -116,7 +116,19 @@ In `backend/migrations/versions/0001_initial.py`, apply every one of these edits
 - The revisions check constraint becomes `"entity_type IN ('radar', 'practice', 'radar_note')"`, name unchanged
 - The downgrade loop becomes `for table in ("revisions", "placements", "radar_notes", "practices", "radars"):`
 
-- [ ] **Step 6: Recreate the database and run the test**
+- [ ] **Step 6: Update the pre-existing schema test and factory**
+
+`backend/tests/test_schema.py` already has `test_all_tables_exist`, which asserts the old table names and imports `make_team`. Both must move now or this task's own test run fails:
+
+```python
+def test_all_tables_exist(session):
+    tables = set(inspect(session.connection()).get_table_names())
+    assert {"radars", "practices", "radar_notes", "placements", "revisions"} <= tables
+```
+
+In `backend/tests/factories.py`, rename `make_team` to `make_radar`, have it construct `Radar` with no `slug` argument, and rename its `team_id=` keyword arguments to `radar_id=`. Update the import line in `test_schema.py` and every other caller in `backend/tests/` to `make_radar`.
+
+- [ ] **Step 7: Recreate the database and run the test**
 
 ```bash
 cd /Users/hans/dev/ai-radar
@@ -126,7 +138,7 @@ uv run pytest tests/test_schema.py -v
 ```
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add backend/app/models.py backend/migrations/versions/0001_initial.py backend/tests/
@@ -148,11 +160,10 @@ git commit -m "refactor(backend): rename Team to Radar in models and drop slug c
 - Consumes: `Radar`, `RadarNote`, `Placement.radar_id` from Task 1.
 - Produces: `RadarRow(id, archived_at)`, `RadarPosition(radar_id, adoption, value)`, `Point(practice_id, adoption, value, radars, radar_positions)`, `PlacementRow(..., radar_id, ...)`, `active_radar_ids(...)`, `build_frames(scope_radar_id=..., radars=..., ...)`, `load_radar_rows(session)`, `position_as_of(session, radar_id, practice_id, at)`, `load_placement_rows(session, *, radar_id=None, practice_id=None)`, `current_usage(session, *, practice_id=None)` returning `dict[int, list[PlacementRow]]`.
 
-- [ ] **Step 1: Update the factories**
+- [ ] **Step 1: Write the failing service test**
 
-In `backend/tests/factories.py`, rename every `Team` construction to `Radar` and every `team_id=` keyword to `radar_id=`. Rename any factory function named `team(...)` to `radar(...)`.
+(`backend/tests/factories.py` was already renamed in Task 1 — `make_radar`, `radar_id=`. Do not redo it.)
 
-- [ ] **Step 2: Write the failing service test**
 
 Add to `backend/tests/test_frames_aggregation.py`:
 
@@ -171,12 +182,12 @@ def test_point_counts_radars_not_teams():
     assert point.radar_positions[0].radar_id == 1
 ```
 
-- [ ] **Step 3: Run it to make sure it fails**
+- [ ] **Step 2: Run it to make sure it fails**
 
 Run: `cd backend && uv run pytest tests/test_frames_aggregation.py::test_point_counts_radars_not_teams -v`
 Expected: FAIL with `ImportError: cannot import name 'RadarPosition' from 'app.services.frames'`
 
-- [ ] **Step 4: Rename through the three service modules**
+- [ ] **Step 3: Rename through the three service modules**
 
 In `backend/app/services/frames.py`: `TeamRow` → `RadarRow`, `TeamPosition` → `RadarPosition` (its field `team_id` → `radar_id`), `Point.teams` → `Point.radars`, `Point.team_positions` → `Point.radar_positions`, `active_team_ids` → `active_radar_ids`, `PlacementRow.team_id` → `radar_id`, and the `build_frames` parameters `scope_team_id` → `scope_radar_id` and `teams` → `radars`. Inside `build_frames` the aggregate line becomes:
 
@@ -188,25 +199,29 @@ adoption=_round(sum(r.adoption for r in rows) / len(active)),
 
 In `backend/app/services/positions.py`: `load_team_rows` → `load_radar_rows`, the `Team` import → `Radar`, and every `team_id` parameter, keyword and attribute → `radar_id`.
 
-In `backend/app/services/revisions.py`:
+In `backend/app/services/revisions.py` — note the schema symbol stays `TeamOut` for now. It is renamed to `RadarOut` in Task 3, when the schema itself is renamed; referencing `RadarOut` here would not import:
 
 ```python
-register(Radar, "radar", RadarOut)
+from app.models import Practice, Radar, RadarNote, Revision
+from app.schemas import NoteOut, PracticeOut, TeamOut
+
+register(Radar, "radar", TeamOut)
+register(Practice, "practice", PracticeOut)
 register(RadarNote, "radar_note", NoteOut)
 ```
 
 the entity-id helper returns `f"{entity.radar_id}:{entity.practice_id}"`, and the editable-fields map keys become `"radar": ("name", "description")` and `"radar_note": ("body_md",)`. Delete the `slugify` import and the `entity.slug = slugify(snapshot["name"])` line from the revert path.
 
-- [ ] **Step 5: Rename through the service tests**
+- [ ] **Step 4: Rename through the service tests**
 
 In `backend/tests/test_frames_aggregation.py` and `backend/tests/test_frames_periods.py`, replace `TeamRow` → `RadarRow`, `TeamPosition` → `RadarPosition`, `team_id=` → `radar_id=`, `teams=` → `radars=`, `scope_team_id=` → `scope_radar_id=`, `.teams` → `.radars`, `.team_positions` → `.radar_positions`.
 
-- [ ] **Step 6: Run the service tests**
+- [ ] **Step 5: Run the service tests**
 
 Run: `cd backend && uv run pytest tests/test_frames_aggregation.py tests/test_frames_periods.py tests/test_labels.py -v`
 Expected: PASS
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add backend/app/services backend/tests
@@ -220,7 +235,7 @@ git commit -m "refactor(backend): rename Team to Radar through the services"
 **Files:**
 - Modify: `backend/app/schemas.py:26-52,76-101,138-148,222-250`
 - Rename: `backend/app/routers/teams.py` → `backend/app/routers/radars.py`
-- Modify: `backend/app/routers/radar.py` → delete, folded into a new `backend/app/routers/frames.py`
+- Rename: `backend/app/routers/radar.py` → `backend/app/routers/frames.py` (via `git mv`; see Step 4)
 - Modify: `backend/app/routers/notes.py`, `placements.py`, `practices.py`, `revisions.py`
 - Modify: `backend/app/main.py` (router registration)
 - Rename: `backend/tests/api/test_teams.py` → `backend/tests/api/test_radars.py`
@@ -283,7 +298,19 @@ radar = Radar(name=data.name, description=data.description)
 
 In `backend/app/routers/frames.py`: `router = APIRouter(tags=["frames"])`, the route becomes `@router.get("/frames", ...)`, the scope pattern becomes `_SCOPE = re.compile(r"^(?:org|radar:(\d+))$")`, the 422 detail becomes `"scope must be 'org' or 'radar:<id>'"`, `team_id` → `radar_id`, the import becomes `from app.routers.radars import get_radar_or_404`, and `build_frames` is called with `scope_radar_id=radar_id, radars=load_radar_rows(session)`.
 
-In `backend/app/main.py`, register the renamed routers: the teams router import becomes `radars`, and the radar router import becomes `frames`. Keep the `/api` prefix exactly as it is applied today.
+In `backend/app/main.py`, line 10 currently reads:
+
+```python
+from app.routers import health, notes, placements, practices, radar, revisions, teams
+```
+
+It becomes:
+
+```python
+from app.routers import frames, health, notes, placements, practices, radars, revisions
+```
+
+Update the corresponding entries in the list the file iterates when calling `app.include_router(router, prefix="/api")`, keeping the `/api` prefix exactly as it is applied today.
 
 - [ ] **Step 5: Rename through the remaining routers**
 
@@ -298,7 +325,13 @@ PracticeRadarUsage(
 )
 ```
 
-and the `slugify` import plus both `slug=slugify(...)` assignments are deleted. `notes.py`'s route path becomes `/radars/{radar_id}/notes/{practice_id}` — confirm its router prefix and adjust so the full path matches the Interfaces block above.
+and the `slugify` import plus both `slug=slugify(...)` assignments are deleted. `notes.py:12` currently reads `router = APIRouter(prefix="/teams/{team_id}/notes", tags=["notes"])`. It becomes:
+
+```python
+router = APIRouter(prefix="/radars/{radar_id}/notes", tags=["notes"])
+```
+
+Its two route decorators `@router.get("/{practice_id}")` and `@router.put("/{practice_id}")` are unchanged; only the path parameter name in the handler signatures moves to `radar_id`.
 
 - [ ] **Step 6: Rename through the API tests**
 
