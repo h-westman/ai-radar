@@ -7,21 +7,20 @@ from sqlalchemy.orm import Session
 from app.clock import utcnow
 from app.deps import EditedBy, SessionDep
 from app.errors import ConflictError, ensure_version
-from app.models import Practice, Team, TeamNote
+from app.models import Practice, Radar, RadarNote
 from app.schemas import (
     Category,
     PracticeCreate,
     PracticeDetail,
     PracticeListItem,
     PracticeOut,
-    PracticeTeamUsage,
+    PracticeRadarUsage,
     PracticeUpdate,
 )
 from app.services.labels import corner_label
 from app.services.positions import current_usage
 from app.services.revisions import record_revision, serialize
 from app.services.similarity import similar_practices
-from app.services.slugs import slugify
 
 router = APIRouter(prefix="/practices", tags=["practices"])
 
@@ -50,7 +49,7 @@ def _with_counts(session: Session, practices: list[Practice]) -> list[PracticeLi
     usage = current_usage(session)
     return [
         PracticeListItem.model_validate(p).model_copy(
-            update={"teams_count": len(usage.get(p.id, []))}
+            update={"radars_count": len(usage.get(p.id, []))}
         )
         for p in practices
     ]
@@ -87,7 +86,7 @@ def similar(
 @router.post("", response_model=PracticeOut, status_code=201)
 def create_practice(data: PracticeCreate, session: SessionDep, editor: EditedBy) -> Practice:
     ensure_practice_name_free(session, data.name)
-    practice = Practice(**data.model_dump(mode="json"), slug=slugify(data.name))
+    practice = Practice(**data.model_dump(mode="json"))
     session.add(practice)
     session.flush()
     record_revision(session, practice, "create", editor)
@@ -99,25 +98,25 @@ def create_practice(data: PracticeCreate, session: SessionDep, editor: EditedBy)
 def get_practice(practice_id: int, session: SessionDep) -> PracticeDetail:
     practice = get_practice_or_404(session, practice_id)
     rows = current_usage(session, practice_id=practice.id).get(practice.id, [])
-    teams = {
-        t.id: t for t in session.scalars(select(Team).where(Team.id.in_([r.team_id for r in rows])))
+    radars = {
+        r.id: r
+        for r in session.scalars(select(Radar).where(Radar.id.in_([row.radar_id for row in rows])))
     }
     notes = {
-        n.team_id: n.body_md
-        for n in session.scalars(select(TeamNote).where(TeamNote.practice_id == practice.id))
+        n.radar_id: n.body_md
+        for n in session.scalars(select(RadarNote).where(RadarNote.practice_id == practice.id))
     }
     usage = [
-        PracticeTeamUsage(
-            team_id=r.team_id,
-            team_name=teams[r.team_id].name,
-            team_slug=teams[r.team_id].slug,
+        PracticeRadarUsage(
+            radar_id=r.radar_id,
+            radar_name=radars[r.radar_id].name,
             label=corner_label(r.adoption, r.value),
-            note_md=notes.get(r.team_id),
+            note_md=notes.get(r.radar_id),
         )
         for r in rows
     ]
-    usage.sort(key=lambda u: u.team_name.lower())
-    return PracticeDetail(**PracticeOut.model_validate(practice).model_dump(), teams=usage)
+    usage.sort(key=lambda u: u.radar_name.lower())
+    return PracticeDetail(**PracticeOut.model_validate(practice).model_dump(), radars=usage)
 
 
 @router.patch("/{practice_id}", response_model=PracticeOut)
@@ -129,7 +128,6 @@ def update_practice(
     changes = data.model_dump(mode="json", exclude_unset=True, exclude={"version"})
     if "name" in changes:
         ensure_practice_name_free(session, changes["name"], exclude_id=practice.id)
-        practice.slug = slugify(changes["name"])
     for field, value in changes.items():
         setattr(practice, field, value)
     _touch(practice)

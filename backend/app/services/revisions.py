@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.models import Practice, Radar, RadarNote, Revision
-from app.schemas import NoteOut, PracticeOut, TeamOut
+from app.schemas import NoteOut, PracticeOut, RadarOut
 
 _REGISTRY: dict[type, tuple[str, type[BaseModel]]] = {}
 
@@ -11,7 +11,7 @@ def register(model_cls: type, entity_type: str, schema_cls: type[BaseModel]) -> 
     _REGISTRY[model_cls] = (entity_type, schema_cls)
 
 
-register(Radar, "radar", TeamOut)
+register(Radar, "radar", RadarOut)
 register(Practice, "practice", PracticeOut)
 register(RadarNote, "radar_note", NoteOut)
 

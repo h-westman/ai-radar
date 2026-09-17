@@ -9,14 +9,14 @@ from sqlalchemy import select
 from app.clock import utcnow
 from app.deps import SessionDep
 from app.models import Practice
-from app.routers.teams import get_team_or_404
+from app.routers.radars import get_radar_or_404
 from app.schemas import FrameOut, FramesOut, PracticeRef
 from app.services.frames import Step, build_frames, period_ends
-from app.services.positions import load_placement_rows, load_team_rows
+from app.services.positions import load_placement_rows, load_radar_rows
 
-router = APIRouter(prefix="/radar", tags=["radar"])
+router = APIRouter(tags=["frames"])
 
-_SCOPE = re.compile(r"^(?:org|team:(\d+))$")
+_SCOPE = re.compile(r"^(?:org|radar:(\d+))$")
 
 
 @router.get("/frames", response_model=FramesOut, response_model_exclude_none=True)
@@ -29,16 +29,16 @@ def get_frames(
 ) -> FramesOut:
     match = _SCOPE.match(scope)
     if match is None:
-        raise HTTPException(status_code=422, detail="scope must be 'org' or 'team:<id>'")
-    team_id = int(match.group(1)) if match.group(1) else None
-    if team_id is not None:
-        get_team_or_404(session, team_id)
+        raise HTTPException(status_code=422, detail="scope must be 'org' or 'radar:<id>'")
+    radar_id = int(match.group(1)) if match.group(1) else None
+    if radar_id is not None:
+        get_radar_or_404(session, radar_id)
 
     now = utcnow()
-    placements = load_placement_rows(session, team_id=team_id)
+    placements = load_placement_rows(session, radar_id=radar_id)
     end = min(to or now, now)
     start = from_ or min((p.effective_at for p in placements), default=end)
-    if from_ is None and team_id is not None:
+    if from_ is None and radar_id is not None:
         start = min(start, end - timedelta(days=365))  # room to backdate (spec §3)
     if start > end:
         raise HTTPException(status_code=422, detail="'from' must not be after 'to'")
@@ -52,8 +52,8 @@ def get_frames(
         p.id: p for p in session.scalars(select(Practice).where(Practice.archived_at.is_(None)))
     }
     result = build_frames(
-        scope_team_id=team_id,
-        teams=load_team_rows(session),
+        scope_radar_id=radar_id,
+        radars=load_radar_rows(session),
         placements=placements,
         practice_ids=set(practices),
         dates=period_ends(start, end, step, now),

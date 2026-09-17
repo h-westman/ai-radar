@@ -19,7 +19,6 @@ def test_create_practice(client, session):
     response = create(client)
     assert response.status_code == 201
     body = response.json()
-    assert body["slug"] == "claude-code"
     assert body["tags"] == ["agentic", "cli"]
     assert body["links"] == [{"label": "Docs", "url": "https://docs.anthropic.com/claude-code"}]
     assert body["body_md"] == ""
@@ -120,12 +119,12 @@ def test_patch_updates_fields_and_writes_revision(client, session):
     assert actions == ["create", "update"]
 
 
-def test_patch_rename_updates_slug(client):
+def test_patch_rename_updates_name_and_version(client):
     practice = create(client).json()
     body = client.patch(
         f"/api/practices/{practice['id']}", json={"version": 1, "name": "Claude Code CLI"}
     ).json()
-    assert body["slug"] == "claude-code-cli"
+    assert (body["name"], body["version"]) == ("Claude Code CLI", 2)
 
 
 def test_patch_stale_version_conflicts(client):
