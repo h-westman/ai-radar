@@ -101,10 +101,10 @@ def active_radar_ids(
     }
 
 
-def team_frame(
-    team_id: int, placements: Sequence[PlacementRow], practice_ids: set[int], at: datetime
+def radar_frame(
+    radar_id: int, placements: Sequence[PlacementRow], practice_ids: set[int], at: datetime
 ) -> list[Point]:
-    latest = latest_as_of((p for p in placements if p.radar_id == team_id), at)
+    latest = latest_as_of((p for p in placements if p.radar_id == radar_id), at)
     points = [
         Point(practice_id=p.practice_id, adoption=p.adoption, value=p.value, radars=1)
         for p in latest.values()
@@ -114,12 +114,12 @@ def team_frame(
 
 
 def org_frame(
-    teams: Sequence[RadarRow],
+    radars: Sequence[RadarRow],
     placements: Sequence[PlacementRow],
     practice_ids: set[int],
     at: datetime,
 ) -> list[Point]:
-    active = active_radar_ids(teams, placements, at)
+    active = active_radar_ids(radars, placements, at)
     if not active:
         return []
     latest = latest_as_of((p for p in placements if p.radar_id in active), at)
@@ -153,4 +153,4 @@ def build_frames(
 ) -> list[Frame]:
     if scope_radar_id is None:
         return [Frame(d, org_frame(radars, placements, practice_ids, d)) for d in dates]
-    return [Frame(d, team_frame(scope_radar_id, placements, practice_ids, d)) for d in dates]
+    return [Frame(d, radar_frame(scope_radar_id, placements, practice_ids, d)) for d in dates]

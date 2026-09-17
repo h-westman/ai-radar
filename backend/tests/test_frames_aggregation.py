@@ -8,7 +8,7 @@ from app.services.frames import (
     active_radar_ids,
     build_frames,
     org_frame,
-    team_frame,
+    radar_frame,
 )
 
 JAN = datetime(2026, 1, 31, 23, 59, 59, tzinfo=UTC)
@@ -47,16 +47,16 @@ def test_team_frame_lists_on_radar_practices_only():
         place(1, X, 70, 80, FEB, removed=True),
         place(2, X, 10, 10, JAN),
     ]
-    assert team_frame(1, rows, ALL, JAN) == [
+    assert radar_frame(1, rows, ALL, JAN) == [
         Point(practice_id=X, adoption=70, value=80, radars=1),
         Point(practice_id=Y, adoption=30, value=40, radars=1),
     ]
-    assert team_frame(1, rows, ALL, FEB) == [Point(practice_id=Y, adoption=30, value=40, radars=1)]
+    assert radar_frame(1, rows, ALL, FEB) == [Point(practice_id=Y, adoption=30, value=40, radars=1)]
 
 
 def test_team_frame_skips_practices_not_in_practice_ids():
     rows = [place(1, X, 70, 80, JAN), place(1, Y, 30, 40, JAN)]
-    assert [p.practice_id for p in team_frame(1, rows, {Y}, JAN)] == [Y]
+    assert [p.practice_id for p in radar_frame(1, rows, {Y}, JAN)] == [Y]
 
 
 def test_org_frame_counts_non_users_as_zero_adoption():
