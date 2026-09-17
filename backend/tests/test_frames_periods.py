@@ -14,7 +14,7 @@ def end_of(y, m, d):
 def row(id, *, eff, rec=None, team=1, practice=1, adoption=50, value=50, removed=False):
     return PlacementRow(
         id=id,
-        team_id=team,
+        radar_id=team,
         practice_id=practice,
         adoption=adoption,
         value=value,

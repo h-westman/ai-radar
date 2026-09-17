@@ -11,7 +11,7 @@ Step = Literal["week", "month"]
 @dataclass(frozen=True)
 class PlacementRow:
     id: int
-    team_id: int
+    radar_id: int
     practice_id: int
     adoption: int
     value: int
@@ -21,14 +21,14 @@ class PlacementRow:
 
 
 @dataclass(frozen=True)
-class TeamRow:
+class RadarRow:
     id: int
     archived_at: datetime | None
 
 
 @dataclass(frozen=True)
-class TeamPosition:
-    team_id: int
+class RadarPosition:
+    radar_id: int
     adoption: int
     value: int
 
@@ -38,8 +38,8 @@ class Point:
     practice_id: int
     adoption: int
     value: int
-    teams: int
-    team_positions: tuple[TeamPosition, ...] | None = None
+    radars: int
+    radar_positions: tuple[RadarPosition, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -81,7 +81,7 @@ def latest_as_of(
     for p in placements:
         if p.effective_at > at:
             continue
-        key = (p.team_id, p.practice_id)
+        key = (p.radar_id, p.practice_id)
         current = latest.get(key)
         if current is None or _order(p) > _order(current):
             latest[key] = p
@@ -92,21 +92,21 @@ def _round(x: float) -> int:
     return int(x + 0.5)
 
 
-def active_team_ids(
-    teams: Iterable[TeamRow], placements: Sequence[PlacementRow], at: datetime
+def active_radar_ids(
+    radars: Iterable[RadarRow], placements: Sequence[PlacementRow], at: datetime
 ) -> set[int]:
-    started = {p.team_id for p in placements if p.effective_at <= at}
+    started = {p.radar_id for p in placements if p.effective_at <= at}
     return {
-        t.id for t in teams if t.id in started and (t.archived_at is None or t.archived_at > at)
+        r.id for r in radars if r.id in started and (r.archived_at is None or r.archived_at > at)
     }
 
 
 def team_frame(
     team_id: int, placements: Sequence[PlacementRow], practice_ids: set[int], at: datetime
 ) -> list[Point]:
-    latest = latest_as_of((p for p in placements if p.team_id == team_id), at)
+    latest = latest_as_of((p for p in placements if p.radar_id == team_id), at)
     points = [
-        Point(practice_id=p.practice_id, adoption=p.adoption, value=p.value, teams=1)
+        Point(practice_id=p.practice_id, adoption=p.adoption, value=p.value, radars=1)
         for p in latest.values()
         if not p.removed and p.practice_id in practice_ids
     ]
@@ -114,15 +114,15 @@ def team_frame(
 
 
 def org_frame(
-    teams: Sequence[TeamRow],
+    teams: Sequence[RadarRow],
     placements: Sequence[PlacementRow],
     practice_ids: set[int],
     at: datetime,
 ) -> list[Point]:
-    active = active_team_ids(teams, placements, at)
+    active = active_radar_ids(teams, placements, at)
     if not active:
         return []
-    latest = latest_as_of((p for p in placements if p.team_id in active), at)
+    latest = latest_as_of((p for p in placements if p.radar_id in active), at)
     by_practice: dict[int, list[PlacementRow]] = {}
     for p in latest.values():
         if not p.removed and p.practice_id in practice_ids:
@@ -130,14 +130,14 @@ def org_frame(
 
     points: list[Point] = []
     for practice_id in sorted(by_practice):
-        rows = sorted(by_practice[practice_id], key=lambda r: r.team_id)
+        rows = sorted(by_practice[practice_id], key=lambda r: r.radar_id)
         points.append(
             Point(
                 practice_id=practice_id,
                 adoption=_round(sum(r.adoption for r in rows) / len(active)),
                 value=_round(sum(r.value for r in rows) / len(rows)),
-                teams=len(rows),
-                team_positions=tuple(TeamPosition(r.team_id, r.adoption, r.value) for r in rows),
+                radars=len(rows),
+                radar_positions=tuple(RadarPosition(r.radar_id, r.adoption, r.value) for r in rows),
             )
         )
     return points
@@ -145,12 +145,12 @@ def org_frame(
 
 def build_frames(
     *,
-    scope_team_id: int | None,
-    teams: Sequence[TeamRow],
+    scope_radar_id: int | None,
+    radars: Sequence[RadarRow],
     placements: Sequence[PlacementRow],
     practice_ids: set[int],
     dates: list[datetime],
 ) -> list[Frame]:
-    if scope_team_id is None:
-        return [Frame(d, org_frame(teams, placements, practice_ids, d)) for d in dates]
-    return [Frame(d, team_frame(scope_team_id, placements, practice_ids, d)) for d in dates]
+    if scope_radar_id is None:
+        return [Frame(d, org_frame(radars, placements, practice_ids, d)) for d in dates]
+    return [Frame(d, team_frame(scope_radar_id, placements, practice_ids, d)) for d in dates]
