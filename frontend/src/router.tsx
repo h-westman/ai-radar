@@ -1,15 +1,15 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
-import AppShell, { LAST_TEAM_KEY } from './components/AppShell'
+import AppShell, { LAST_RADAR_KEY } from './components/AppShell'
 import { readString } from './lib/storage'
 import CatalogPage from './pages/CatalogPage'
 import NotFound from './pages/NotFound'
 import PracticePage from './pages/PracticePage'
+import RadarListPage from './pages/RadarListPage'
 import RadarPage from './pages/RadarPage'
-import TeamsPage from './pages/TeamsPage'
 
 export function HomeRedirect() {
-  const lastTeam = readString(LAST_TEAM_KEY)
-  return <Navigate replace to={lastTeam ? `/radar/team/${lastTeam}` : '/radar/org'} />
+  const lastRadar = readString(LAST_RADAR_KEY)
+  return <Navigate replace to={lastRadar ? `/radar/${lastRadar}` : '/radar/org'} />
 }
 
 export const routes: RouteObject[] = [
@@ -18,10 +18,10 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <HomeRedirect /> },
       { path: 'radar/org', element: <RadarPage /> },
-      { path: 'radar/team/:teamRef', element: <RadarPage /> },
+      { path: 'radar/:radarId', element: <RadarPage /> },
       { path: 'practices', element: <CatalogPage /> },
-      { path: 'practices/:practiceRef', element: <PracticePage /> },
-      { path: 'teams', element: <TeamsPage /> },
+      { path: 'practices/:practiceId', element: <PracticePage /> },
+      { path: 'radars', element: <RadarListPage /> },
       { path: '*', element: <NotFound /> },
     ],
   },
