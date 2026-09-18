@@ -7,27 +7,25 @@ import type { Category, Note } from '../api/types'
 import type { PositionLabel } from '../chart/geometry'
 import Editor from '../editor/Editor'
 import MarkdownView from '../editor/MarkdownView'
-import { toRef } from '../lib/refs'
 import CategoryChip from './CategoryChip'
 import { useNamePrompt } from './NamePrompt'
 import styles from './Panels.module.css'
 import { useToast } from './Toasts'
 
-export type DrawerPractice = { id: number; name: string; slug: string; category: Category; summary: string }
+export type DrawerPractice = { id: number; name: string; category: Category; summary: string }
 
 type Props = {
   scope: 'team' | 'org'
   practice: DrawerPractice
   label: PositionLabel
-  teamId?: number
-  teams?: { teamId: number; teamName: string; label: PositionLabel }[]
+  radarId?: number
+  radars?: { radarId: number; radarName: string; label: PositionLabel }[]
   canRemove: boolean
   onRemove: () => void
   onClose: () => void
 }
 
-export default function Drawer({ scope, practice, label, teamId, teams, canRemove, onRemove, onClose }: Props) {
-  const ref = toRef(practice.id, practice.slug)
+export default function Drawer({ scope, practice, label, radarId, radars, canRemove, onRemove, onClose }: Props) {
   return (
     <aside className={styles.drawer} aria-label={`Details for ${practice.name}`}>
       <div className={styles.drawerHeader}>
@@ -41,32 +39,32 @@ export default function Drawer({ scope, practice, label, teamId, teams, canRemov
       <p>
         Position: <strong>{label}</strong>
       </p>
-      {scope === 'team' && teamId !== undefined && (
-        <TeamNote key={`${teamId}:${practice.id}`} teamId={teamId} practiceId={practice.id} />
+      {scope === 'team' && radarId !== undefined && (
+        <RadarNote key={`${radarId}:${practice.id}`} radarId={radarId} practiceId={practice.id} />
       )}
       {scope === 'org' && (
         <section>
-          <h3>Teams using it</h3>
+          <h3>Who’s using it</h3>
           <ul>
-            {(teams ?? []).map((t) => (
-              <li key={t.teamId}>
-                <span>{t.teamName}</span> · <span>{t.label}</span>
+            {(radars ?? []).map((r) => (
+              <li key={r.radarId}>
+                <span>{r.radarName}</span> · <span>{r.label}</span>
               </li>
             ))}
           </ul>
         </section>
       )}
       <div className={styles.actions}>
-        <Link to={`/practices/${ref}`}>Open page</Link>
-        <Link to={`/practices/${ref}?tab=history`}>History</Link>
+        <Link to={`/practices/${practice.id}`}>Open page</Link>
+        <Link to={`/practices/${practice.id}?tab=history`}>History</Link>
         {canRemove && <button onClick={onRemove}>Remove from radar</button>}
       </div>
     </aside>
   )
 }
 
-function TeamNote({ teamId, practiceId }: { teamId: number; practiceId: number }) {
-  const { data: note, isLoading } = useNote(teamId, practiceId)
+function RadarNote({ radarId, practiceId }: { radarId: number; practiceId: number }) {
+  const { data: note, isLoading } = useNote(radarId, practiceId)
   const putNote = usePutNote()
   const queryClient = useQueryClient()
   const { ensureName } = useNamePrompt()
@@ -78,12 +76,12 @@ function TeamNote({ teamId, practiceId }: { teamId: number; practiceId: number }
     if (draft === null) return
     await ensureName()
     try {
-      await putNote.mutateAsync({ teamId, practiceId, version: note?.version ?? 0, body_md: draft })
+      await putNote.mutateAsync({ radarId, practiceId, version: note?.version ?? 0, body_md: draft })
       setDraft(null)
       setConflict(false)
     } catch (error) {
       if (isConflict(error)) {
-        queryClient.setQueryData(keys.note(teamId, practiceId), conflictCurrent<Note>(error))
+        queryClient.setQueryData(keys.note(radarId, practiceId), conflictCurrent<Note>(error))
         setConflict(true)
       } else {
         const message = validationMessage(error)

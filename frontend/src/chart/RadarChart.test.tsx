@@ -11,7 +11,7 @@ describe('RadarChart', () => {
     const { container } = render(
       <RadarChart
         scope="team"
-        bubbles={[{ practiceId: 10, name: 'Claude Code', category: 'tool', adoption: 70, value: 80, teams: 1 }]}
+        bubbles={[{ practiceId: 10, name: 'Claude Code', category: 'tool', adoption: 70, value: 80, radars: 1 }]}
         dateLabel="Feb 2026"
         selected={[]}
         trails={{}}

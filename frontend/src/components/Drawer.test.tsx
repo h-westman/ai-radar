@@ -13,8 +13,15 @@ import { NamePromptProvider } from './NamePrompt'
 import { ToastProvider } from './Toasts'
 import Drawer, { type DrawerPractice } from './Drawer'
 
-const practice = { id: 10, name: 'Claude Code', slug: 'claude-code', category: 'tool' as const, summary: 'Agentic coding.' }
-const otherPractice: DrawerPractice = { id: 11, name: 'Other Practice', slug: 'other-practice', category: 'tool', summary: 'Something else.' }
+// '../test/render' imports the app router, which still statically imports
+// CatalogPage and PracticePage. Those still import the deleted `lib/refs`
+// module (Task 8 fixes that). Stub them out so this file's render helpers
+// load without pulling in those still-broken pages.
+vi.mock('../pages/CatalogPage', () => ({ default: () => null }))
+vi.mock('../pages/PracticePage', () => ({ default: () => null }))
+
+const practice = { id: 10, name: 'Claude Code', category: 'tool' as const, summary: 'Agentic coding.' }
+const otherPractice: DrawerPractice = { id: 11, name: 'Other Practice', category: 'tool', summary: 'Something else.' }
 
 function renderDrawerHarness(practiceProp: DrawerPractice) {
   const client = createTestQueryClient()
@@ -23,7 +30,7 @@ function renderDrawerHarness(practiceProp: DrawerPractice) {
       <ToastProvider>
         <NamePromptProvider>
           <MemoryRouter>
-            <Drawer scope="team" practice={p} label="Core" teamId={1} canRemove onRemove={() => {}} onClose={() => {}} />
+            <Drawer scope="team" practice={p} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />
           </MemoryRouter>
         </NamePromptProvider>
       </ToastProvider>
@@ -39,31 +46,31 @@ beforeEach(() => {
 })
 
 describe('Drawer', () => {
-  it('shows team details, note and links', async () => {
-    server.use(http.get('/api/teams/1/notes/10', () => HttpResponse.json(note())))
+  it('shows practice details, note and links', async () => {
+    server.use(http.get('/api/radars/1/notes/10', () => HttpResponse.json(note())))
     const onRemove = vi.fn()
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" teamId={1} canRemove onRemove={onRemove} onClose={() => {}} />,
+      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={onRemove} onClose={() => {}} />,
     )
     expect(screen.getByRole('complementary', { name: 'Details for Claude Code' })).toBeInTheDocument()
     expect(screen.getByText('Core')).toBeInTheDocument()
     expect(await screen.findByText('We use it for refactors.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open page' })).toHaveAttribute('href', '/practices/10-claude-code')
+    expect(screen.getByRole('link', { name: 'Open page' })).toHaveAttribute('href', '/practices/10')
     await userEvent.click(screen.getByRole('button', { name: 'Remove from radar' }))
     expect(onRemove).toHaveBeenCalledOnce()
   })
 
-  it('edits the team note', async () => {
+  it('edits the radar note', async () => {
     let body: unknown
     server.use(
-      http.get('/api/teams/1/notes/10', () => HttpResponse.json(note())),
-      http.put('/api/teams/1/notes/10', async ({ request }) => {
+      http.get('/api/radars/1/notes/10', () => HttpResponse.json(note())),
+      http.put('/api/radars/1/notes/10', async ({ request }) => {
         body = await request.json()
         return HttpResponse.json(note({ body_md: 'Updated', version: 2 }))
       }),
     )
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" teamId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
+      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
     )
     await userEvent.click(await screen.findByRole('button', { name: 'Edit note' }))
     const textarea = screen.getByRole('textbox', { name: 'How we use it' })
@@ -75,8 +82,8 @@ describe('Drawer', () => {
 
   it('keeps the draft when someone else saved first', async () => {
     server.use(
-      http.get('/api/teams/1/notes/10', () => HttpResponse.json(note())),
-      http.put('/api/teams/1/notes/10', () =>
+      http.get('/api/radars/1/notes/10', () => HttpResponse.json(note())),
+      http.put('/api/radars/1/notes/10', () =>
         HttpResponse.json(
           { detail: 'changed', current: note({ body_md: 'Their text', version: 2 }) },
           { status: 409 },
@@ -84,7 +91,7 @@ describe('Drawer', () => {
       ),
     )
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" teamId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
+      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
     )
     await userEvent.click(await screen.findByRole('button', { name: 'Edit note' }))
     const textarea = screen.getByRole('textbox', { name: 'How we use it' })
@@ -98,11 +105,11 @@ describe('Drawer', () => {
   it('does not leak a note draft to a different practice when the drawer re-renders', async () => {
     let putCalled = false
     server.use(
-      http.get('/api/teams/1/notes/10', () => HttpResponse.json(note())),
-      http.get('/api/teams/1/notes/11', () =>
+      http.get('/api/radars/1/notes/10', () => HttpResponse.json(note())),
+      http.get('/api/radars/1/notes/11', () =>
         HttpResponse.json(note({ practice_id: 11, body_md: 'Their note for the other practice.' })),
       ),
-      http.put('/api/teams/1/notes/:practiceId', () => {
+      http.put('/api/radars/1/notes/:practiceId', () => {
         putCalled = true
         return HttpResponse.json(note())
       }),
@@ -120,15 +127,15 @@ describe('Drawer', () => {
     expect(putCalled).toBe(false)
   })
 
-  it('lists teams in the org scope without remove', () => {
+  it('lists radars in the org scope without remove', () => {
     renderWithProviders(
       <Drawer
         scope="org"
         practice={practice}
         label="Core"
-        teams={[
-          { teamId: 1, teamName: 'Platform', label: 'Core' },
-          { teamId: 2, teamName: 'Payments', label: 'Hidden gem' },
+        radars={[
+          { radarId: 1, radarName: 'Platform', label: 'Core' },
+          { radarId: 2, radarName: 'Payments', label: 'Hidden gem' },
         ]}
         canRemove={false}
         onRemove={() => {}}
@@ -138,5 +145,21 @@ describe('Drawer', () => {
     expect(screen.getByText('Payments')).toBeInTheDocument()
     expect(screen.getByText('Hidden gem')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remove from radar' })).not.toBeInTheDocument()
+  })
+
+  it('lists who is using the practice in org scope', () => {
+    renderWithProviders(
+      <Drawer
+        scope="org"
+        practice={practice}
+        label="Core"
+        radars={[{ radarId: 3, radarName: 'Platform', label: 'Core' }]}
+        canRemove={false}
+        onRemove={() => {}}
+        onClose={() => {}}
+      />,
+    )
+    expect(screen.getByRole('heading', { name: 'Who’s using it' })).toBeInTheDocument()
+    expect(screen.getByText('Platform')).toBeInTheDocument()
   })
 })

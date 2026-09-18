@@ -13,15 +13,15 @@ import {
   type Size,
 } from './geometry'
 
-export type TeamDot = { teamId: number; teamName: string; adoption: number; value: number }
+export type RadarDot = { radarId: number; radarName: string; adoption: number; value: number }
 export type ChartBubble = {
   practiceId: number
   name: string
   category: Category
   adoption: number
   value: number
-  teams: number
-  teamPositions?: TeamDot[]
+  radars: number
+  radarPositions?: RadarDot[]
 }
 export type LabelledPoint = { adoption: number; value: number; label: string }
 export type ChartState = {
@@ -185,7 +185,7 @@ export function createRadar(svgEl: SVGSVGElement, callbacks: ChartCallbacks) {
   function renderSpread(next: ChartState, selected: Set<number>) {
     const data =
       next.scope === 'org'
-        ? next.bubbles.filter((b) => selected.has(b.practiceId) && b.teamPositions?.length)
+        ? next.bubbles.filter((b) => selected.has(b.practiceId) && b.radarPositions?.length)
         : []
     spreadLayer
       .selectAll<SVGGElement, ChartBubble>('g.radar-spread')
@@ -195,7 +195,7 @@ export function createRadar(svgEl: SVGSVGElement, callbacks: ChartCallbacks) {
       .each(function (b) {
         const g = d3.select(this)
         const center = at(b)
-        const dots = b.teamPositions ?? []
+        const dots = b.radarPositions ?? []
         g.selectAll('line')
           .data(dots)
           .join('line')
@@ -214,14 +214,14 @@ export function createRadar(svgEl: SVGSVGElement, callbacks: ChartCallbacks) {
           .join('text')
           .attr('x', (t) => at(t).x + 6)
           .attr('y', (t) => at(t).y + 3)
-          .text((t) => t.teamName)
+          .text((t) => t.radarName)
       })
     return data.length > 0
   }
 
   function renderBubbles(next: ChartState, selected: Set<number>, spreading: boolean) {
-    const maxTeams = d3.max(next.bubbles, (b) => b.teams) ?? 1
-    const radius = (d: ChartBubble) => bubbleRadius(d.teams, maxTeams, next.scope)
+    const maxRadars = d3.max(next.bubbles, (b) => b.radars) ?? 1
+    const radius = (d: ChartBubble) => bubbleRadius(d.radars, maxRadars, next.scope)
     const query = next.highlight.trim().toLowerCase()
 
     const join = bubbleLayer
