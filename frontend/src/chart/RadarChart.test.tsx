@@ -10,7 +10,7 @@ describe('RadarChart', () => {
     const onDropPractice = vi.fn()
     const { container } = render(
       <RadarChart
-        scope="team"
+        scope="radar"
         bubbles={[{ practiceId: 10, name: 'Claude Code', category: 'tool', adoption: 70, value: 80, radars: 1 }]}
         dateLabel="Feb 2026"
         selected={[]}
@@ -40,11 +40,11 @@ describe('RadarChart', () => {
   it('lets the chart container shrink below the SVG width', () => {
     // The renderer stamps the measured size onto the SVG as a width attribute. Without
     // min-width: 0 the flex item's automatic minimum keeps the container at that width when
-    // the layout narrows (the tray appears when switching from the org radar to a team radar),
+    // the layout narrows (the tray appears when switching from the org radar to a single radar),
     // so the ResizeObserver never reports a change and the chart stays too wide.
     const { container } = render(
       <RadarChart
-        scope="team"
+        scope="radar"
         bubbles={[]}
         dateLabel="Now"
         selected={[]}

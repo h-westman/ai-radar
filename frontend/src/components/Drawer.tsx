@@ -15,7 +15,7 @@ import { useToast } from './Toasts'
 export type DrawerPractice = { id: number; name: string; category: Category; summary: string }
 
 type Props = {
-  scope: 'team' | 'org'
+  scope: 'radar' | 'org'
   practice: DrawerPractice
   label: PositionLabel
   radarId?: number
@@ -39,7 +39,7 @@ export default function Drawer({ scope, practice, label, radarId, radars, canRem
       <p>
         Position: <strong>{label}</strong>
       </p>
-      {scope === 'team' && radarId !== undefined && (
+      {scope === 'radar' && radarId !== undefined && (
         <RadarNote key={`${radarId}:${practice.id}`} radarId={radarId} practiceId={practice.id} />
       )}
       {scope === 'org' && (

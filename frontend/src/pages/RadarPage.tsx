@@ -30,7 +30,7 @@ function prefersReducedMotion() {
 export default function RadarPage() {
   const { radarId: radarRef } = useParams()
   const radarId = parseId(radarRef)
-  const scope = radarId === null ? 'org' : 'team'
+  const scope = radarId === null ? 'org' : 'radar'
   const scopeKey = radarId === null ? 'org' : `radar:${radarId}`
 
   const [step, setStep] = useState<Step>('month')
@@ -56,7 +56,7 @@ export default function RadarPage() {
   const isLatest = currentIndex === lastIndex
   const frame = frames[currentIndex]
   const radar = radars.find((r) => r.id === radarId)
-  const radarWritable = scope === 'team' && !!radar && radar.archived_at === null
+  const radarWritable = scope === 'radar' && !!radar && radar.archived_at === null
   const editable = radarWritable && !playing && (isLatest || unlocked)
   const editingPast = radarWritable && unlocked && !isLatest
 
@@ -197,7 +197,7 @@ export default function RadarPage() {
 
   return (
     <div className={styles.layout}>
-      {scope === 'team' && (
+      {scope === 'radar' && (
         <Tray practices={trayPractices} editable={editable} onPlace={(id) => void save(id, CENTER)} />
       )}
       <section className={styles.center} aria-label={`${title} radar`}>
@@ -248,7 +248,7 @@ export default function RadarPage() {
           />
           {!isLoading && points.length === 0 && (
             <p className={styles.empty}>
-              {scope === 'team'
+              {scope === 'radar'
                 ? 'Drag practices from the tray onto the chart to start this radar.'
                 : 'No team has placed anything yet.'}
             </p>

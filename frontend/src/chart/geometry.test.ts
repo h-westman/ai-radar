@@ -6,7 +6,7 @@ import {
   fromPixel,
   plotBox,
   positionLabel,
-  TEAM_RADIUS,
+  RADAR_RADIUS,
   toPixel,
 } from './geometry'
 
@@ -39,7 +39,7 @@ describe('geometry', () => {
   })
 
   it('sizes bubbles', () => {
-    expect(bubbleRadius(1, 9, 'team')).toBe(TEAM_RADIUS)
+    expect(bubbleRadius(1, 9, 'radar')).toBe(RADAR_RADIUS)
     expect(bubbleRadius(0, 9, 'org')).toBe(8)
     expect(bubbleRadius(9, 9, 'org')).toBe(22)
     expect(bubbleRadius(4, 9, 'org')).toBeGreaterThan(bubbleRadius(1, 9, 'org'))

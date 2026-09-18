@@ -6,13 +6,6 @@ import { listItem } from '../test/fixtures'
 import { renderWithProviders as render } from '../test/render'
 import Tray from './Tray'
 
-// '../test/render' imports the app router, which still statically imports
-// CatalogPage and PracticePage. Those still import the deleted `lib/refs`
-// module (Task 8 fixes that). Stub them out so this file's render helper
-// loads without pulling in those still-broken pages.
-vi.mock('../pages/CatalogPage', () => ({ default: () => null }))
-vi.mock('../pages/PracticePage', () => ({ default: () => null }))
-
 const practices = [
   listItem({ id: 12, name: 'Prompt library', category: 'workflow' }),
   listItem({ id: 13, name: 'MCP servers' }),

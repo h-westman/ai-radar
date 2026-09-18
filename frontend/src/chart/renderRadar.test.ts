@@ -18,7 +18,7 @@ function setup(overrides: Partial<ChartState> = {}) {
   const radar = createRadar(svg, callbacks)
   const state: ChartState = {
     size: { width: 452, height: 252 },
-    scope: 'team',
+    scope: 'radar',
     bubbles: [bubble(10, 'Claude Code', 'tool', 70, 80), bubble(11, 'Spec-driven dev', 'practice', 20, 60)],
     dateLabel: 'Feb 2026',
     selected: [],

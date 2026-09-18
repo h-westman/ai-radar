@@ -1,19 +1,12 @@
 import { screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { writeString } from '../lib/storage'
 import { radar } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
 import { LAST_RADAR_KEY } from './AppShell'
-
-// RadarPage, CatalogPage and PracticePage still import the deleted `lib/refs`
-// module (Tasks 7/8 fix that). Stub them out so the router can be exercised
-// here without pulling in those still-broken pages.
-vi.mock('../pages/RadarPage', () => ({ default: () => <div data-testid="radar-page-stub" /> }))
-vi.mock('../pages/CatalogPage', () => ({ default: () => <div data-testid="catalog-page-stub" /> }))
-vi.mock('../pages/PracticePage', () => ({ default: () => <div data-testid="practice-page-stub" /> }))
 
 beforeEach(() => {
   server.use(

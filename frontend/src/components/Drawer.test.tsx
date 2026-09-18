@@ -13,13 +13,6 @@ import { NamePromptProvider } from './NamePrompt'
 import { ToastProvider } from './Toasts'
 import Drawer, { type DrawerPractice } from './Drawer'
 
-// '../test/render' imports the app router, which still statically imports
-// CatalogPage and PracticePage. Those still import the deleted `lib/refs`
-// module (Task 8 fixes that). Stub them out so this file's render helpers
-// load without pulling in those still-broken pages.
-vi.mock('../pages/CatalogPage', () => ({ default: () => null }))
-vi.mock('../pages/PracticePage', () => ({ default: () => null }))
-
 const practice = { id: 10, name: 'Claude Code', category: 'tool' as const, summary: 'Agentic coding.' }
 const otherPractice: DrawerPractice = { id: 11, name: 'Other Practice', category: 'tool', summary: 'Something else.' }
 
@@ -30,7 +23,7 @@ function renderDrawerHarness(practiceProp: DrawerPractice) {
       <ToastProvider>
         <NamePromptProvider>
           <MemoryRouter>
-            <Drawer scope="team" practice={p} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />
+            <Drawer scope="radar" practice={p} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />
           </MemoryRouter>
         </NamePromptProvider>
       </ToastProvider>
@@ -50,7 +43,7 @@ describe('Drawer', () => {
     server.use(http.get('/api/radars/1/notes/10', () => HttpResponse.json(note())))
     const onRemove = vi.fn()
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={onRemove} onClose={() => {}} />,
+      <Drawer scope="radar" practice={practice} label="Core" radarId={1} canRemove onRemove={onRemove} onClose={() => {}} />,
     )
     expect(screen.getByRole('complementary', { name: 'Details for Claude Code' })).toBeInTheDocument()
     expect(screen.getByText('Core')).toBeInTheDocument()
@@ -70,7 +63,7 @@ describe('Drawer', () => {
       }),
     )
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
+      <Drawer scope="radar" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
     )
     await userEvent.click(await screen.findByRole('button', { name: 'Edit note' }))
     const textarea = screen.getByRole('textbox', { name: 'How we use it' })
@@ -91,7 +84,7 @@ describe('Drawer', () => {
       ),
     )
     renderWithProviders(
-      <Drawer scope="team" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
+      <Drawer scope="radar" practice={practice} label="Core" radarId={1} canRemove onRemove={() => {}} onClose={() => {}} />,
     )
     await userEvent.click(await screen.findByRole('button', { name: 'Edit note' }))
     const textarea = screen.getByRole('textbox', { name: 'How we use it' })

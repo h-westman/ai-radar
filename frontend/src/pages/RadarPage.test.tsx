@@ -1,21 +1,13 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import type { FramesResponse } from '../api/types'
 import { LAST_RADAR_KEY } from '../components/AppShell'
 import { setEditedBy } from '../lib/editedBy'
 import { framesResponse, listItem, radar } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
-
-// '../test/render' -> '../router' statically imports CatalogPage and
-// PracticePage. Those still import the deleted `lib/refs` module (Task 8
-// fixes that). Stub them out so the router can be exercised here without
-// pulling in those still-broken pages. RadarPage itself is left real: it's
-// what this file tests.
-vi.mock('./CatalogPage', () => ({ default: () => <div data-testid="catalog-page-stub" /> }))
-vi.mock('./PracticePage', () => ({ default: () => <div data-testid="practice-page-stub" /> }))
 
 let posted: unknown[]
 let frames: FramesResponse
@@ -54,7 +46,7 @@ async function openRadar() {
   return view
 }
 
-describe('RadarPage (team scope)', () => {
+describe('RadarPage (radar scope)', () => {
   it('shows the latest frame, and the tray lists practices not on the radar', async () => {
     await openRadar()
     expect(bubble('Spec-driven dev, Hidden gem')).not.toBeNull()

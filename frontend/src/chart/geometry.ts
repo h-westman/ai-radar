@@ -32,11 +32,11 @@ export function fromPixel(box: PlotBox, x: number, y: number) {
   return { adoption: clampScore(adoption), value: clampScore(value), inside }
 }
 
-export const TEAM_RADIUS = 10
+export const RADAR_RADIUS = 10
 
-export function bubbleRadius(teams: number, maxTeams: number, scope: 'team' | 'org'): number {
-  if (scope === 'team') return TEAM_RADIUS
-  return 8 + 14 * Math.sqrt(teams / Math.max(1, maxTeams))
+export function bubbleRadius(radars: number, maxRadars: number, scope: 'radar' | 'org'): number {
+  if (scope === 'radar') return RADAR_RADIUS
+  return 8 + 14 * Math.sqrt(radars / Math.max(1, maxRadars))
 }
 
 export const CORNER_LABELS = {

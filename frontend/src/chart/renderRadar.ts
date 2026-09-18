@@ -26,7 +26,7 @@ export type ChartBubble = {
 export type LabelledPoint = { adoption: number; value: number; label: string }
 export type ChartState = {
   size: Size
-  scope: 'team' | 'org'
+  scope: 'radar' | 'org'
   bubbles: ChartBubble[]
   dateLabel: string
   selected: number[]
