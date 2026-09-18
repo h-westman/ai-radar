@@ -1,31 +1,11 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { http, HttpResponse } from 'msw'
-import type { ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
 import { framesResponse, note, radar } from '../test/fixtures'
+import { createTestQueryClient, queryWrapper } from '../test/render'
 import { server } from '../test/server'
 import { isConflict } from './client'
 import { useFrames, useNote, usePlace, useRadars, useUpdatePractice } from './hooks'
-
-// Inlined instead of importing from '../test/render': that module statically pulls in
-// '../router' -> pages/components which still import the deleted '../lib/refs' (Tasks 6-8
-// fix those). This suite only needs a bare QueryClientProvider wrapper, so it avoids the
-// transitive chain entirely.
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false, gcTime: Infinity },
-      mutations: { retry: false },
-    },
-  })
-}
-
-function queryWrapper(client = createTestQueryClient()) {
-  return function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>
-  }
-}
 
 describe('query hooks', () => {
   it('useRadars loads radars', async () => {

@@ -779,6 +779,18 @@ The rename is done when all of these hold:
 ```bash
 cd /Users/hans/dev/ai-radar/backend && uv run pytest
 cd /Users/hans/dev/ai-radar/frontend && npm run typecheck && npm test && npm run check:api && npm run build
-grep -rin "team" frontend/src backend/app          # no output
+grep -rin "team" frontend/src backend/app
 grep -rin "slug" frontend/src backend/app          # no output
 ```
+
+The `team` grep is expected to return exactly two hits, both prose about a human team, not
+the renamed entity, and both deliberately preserved (see Task 9's brief, §1 Purpose in
+`docs/superpowers/specs/2026-09-13-ai-radar-design.md` for the same distinction):
+
+```
+frontend/src/lib/categories.ts:24:    description: 'a habit your team applies while working',
+frontend/src/pages/CatalogPage.test.tsx:102:      /a habit your team applies while working/i,
+```
+
+Any other `team` hit is a real regression; a `grep` returning no output at all is not
+achievable and was never the right bar.

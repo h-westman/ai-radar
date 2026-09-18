@@ -9,18 +9,18 @@ AI Radar is an interactive AI engineering practice tool. It helps development te
 
 It has two parts:
 
-1. **A practices editor.** A shared, org-wide catalog of entries with structured fields and markdown guidance, plus each team's own "how we use it" notes.
-2. **A radar.** A bubble chart with **Adoption / Usage** on the X axis and **Perceived Value** on the Y axis. There is one radar per team and one aggregated org radar, and both can be **animated over time**.
+1. **A practices editor.** A shared, org-wide catalog of entries with structured fields and markdown guidance, plus each radar's own "how we use it" notes.
+2. **A radar chart.** A bubble chart with **Adoption / Usage** on the X axis and **Perceived Value** on the Y axis. There is one chart per radar and one aggregated org chart, and both can be **animated over time**.
 
 ## 2. Decisions summary
 
 | Topic | Decision |
 |---|---|
 | Audience | Many teams in one org |
-| Positioning | **Team consensus.** A team agrees on and drags one position per practice. |
-| Catalog | **Shared org catalog.** One entry per practice, with team-specific notes. |
+| Positioning | **Radar consensus.** The team or person behind a radar agrees on and drags one position per practice. |
+| Catalog | **Shared org catalog.** One entry per practice, with radar-specific notes. |
 | History | **Continuous.** Every placement is an append-only event. Backdating is supported through `effective_at`. |
-| Entry content | Fixed fields plus a markdown body, and one team note per team per practice |
+| Entry content | Fixed fields plus a markdown body, and one radar note per radar per practice |
 | Governance | Anyone can add or edit. Revisions, archiving and restore protect against mistakes and vandalism. |
 | Access | **No login, unlisted public URL.** Entra sign-in can be added later through App Service authentication (a config change only). |
 | Hosting | Azure App Service (Linux) and Azure Database for PostgreSQL Flexible Server, production only |
@@ -28,22 +28,22 @@ It has two parts:
 | Frontend | React, TypeScript, Vite, React Router, TanStack Query, D3 |
 | Infrastructure | Created manually in the Azure portal and documented in `docs/azure-setup.md` |
 | CI/CD | GitHub Actions, deploying to Azure through OIDC federated credentials |
-| Scale | Small: up to about 10 teams and about 100 practices |
+| Scale | Small: up to about 10 radars and about 100 practices |
 
 ## 3. Domain and data model (PostgreSQL)
 
-All tables use integer identity primary keys. Timestamps are `timestamptz` stored in UTC and displayed in the browser's local time. URLs have the form `/<kind>/<id>-<slug>`: the id is used for lookup and the slug is only cosmetic, so renaming never breaks a link.
+All tables use integer identity primary keys. Timestamps are `timestamptz` stored in UTC and displayed in the browser's local time. URLs have the form `/<kind>/<id>`, so renaming never affects a link.
 
 ### Tables
 
-**`teams`**
-- `id`, `name`, `slug`, `description` (text, nullable)
+**`radars`**
+- `id`, `name`, `description` (text, nullable)
 - `version` (int, starts at 1)
 - `created_at`, `updated_at`, `archived_at` (nullable)
 - Unique index on `lower(name)`
 
 **`practices`** (the shared catalog)
-- `id`, `name`, `slug`
+- `id`, `name`
 - `category`: enum `tool | skill | practice | workflow`
 - `summary`: text, at most 280 characters
 - `body_md`: text, at most 100 KB
@@ -53,24 +53,24 @@ All tables use integer identity primary keys. Timestamps are `timestamptz` store
 - Unique index on `lower(name)`, which applies to archived rows too
 - Trigram index on `name` (`pg_trgm`)
 
-**`team_notes`**
-- Primary key `(team_id, practice_id)`
+**`radar_notes`**
+- Primary key `(radar_id, practice_id)`
 - `body_md` (at most 100 KB), `version`, `updated_at`, `edited_by`
 
 **`placements`** (append-only, never updated or deleted)
-- `id`, `team_id`, `practice_id`
+- `id`, `radar_id`, `practice_id`
 - `adoption`: smallint 0–100
 - `value`: smallint 0–100
 - `removed`: bool, default false
 - `effective_at`: defaults to now and must not be in the future
 - `recorded_at`: always now
 - `edited_by`
-- Index on `(team_id, practice_id, effective_at desc, recorded_at desc)`
+- Index on `(radar_id, practice_id, effective_at desc, recorded_at desc)`
 
 **`revisions`**
 - `id`
-- `entity_type`: enum `team | practice | team_note`
-- `entity_id`: text. Holds the id for teams and practices, and `"<team_id>:<practice_id>"` for notes.
+- `entity_type`: enum `radar | practice | radar_note`
+- `entity_id`: text. Holds the id for radars and practices, and `"<radar_id>:<practice_id>"` for notes.
 - `action`: enum `create | update | archive | restore | revert`
 - `snapshot`: `jsonb`, the full entity as it is after the change
 - `edited_by`, `created_at`
@@ -79,39 +79,39 @@ All tables use integer identity primary keys. Timestamps are `timestamptz` store
 
 ### Rules
 
-**Position of (team, practice) as of date D**
+**Position of (radar, practice) as of date D**
 - It is the placement with `effective_at <= D`, sorted by `effective_at desc`, then `recorded_at desc`, then `id desc`, with the first row winning.
-- If that placement has `removed = true`, or there is none, the practice is not on the team's radar at D.
-- The team's current radar is its position as of now.
+- If that placement has `removed = true`, or there is none, the practice is not on the radar at D.
+- The radar's current state is its position as of now.
 
 **Corner labels**
 - The quadrants are split at 50.
 - adoption ≥ 50 and value ≥ 50 → **Core**
-- adoption < 50 and value ≥ 50 → **Hidden gems** (shown in the singular, "Hidden gem", for a single team's position)
+- adoption < 50 and value ≥ 50 → **Hidden gems** (shown in the singular, "Hidden gem", for a single radar's position)
 - adoption ≥ 50 and value < 50 → **Question it**
 - adoption < 50 and value < 50 → **Parked**
 - The UI describes positions only by these labels. The axes are qualitative (low → high) and raw numbers are never shown.
 
-**Active teams at D**
-- Teams with `archived_at` null or later than D, that have at least one placement (for any practice) with `effective_at <= D`.
-- A team created today that backdates placements to March therefore counts from March.
+**Active radars at D**
+- Radars with `archived_at` null or later than D, that have at least one placement (for any practice) with `effective_at <= D`.
+- A radar created today that backdates placements to March therefore counts from March.
 
-**Org aggregate for a practice at D**, where `U` is the set of active teams whose position as of D is on the radar:
-- `adoption = sum(team adoption over U) / count(active teams at D)`. Active teams not in U count as 0.
-- `value = mean(team value over U)`
-- `teams = |U|`. This number sets the bubble size.
+**Org aggregate for a practice at D**, where `U` is the set of active radars whose position as of D is on the radar:
+- `adoption = sum(radar adoption over U) / count(active radars at D)`. Active radars not in U count as 0.
+- `value = mean(radar value over U)`
+- `radars = |U|`. This number sets the bubble size.
 - A practice is shown only if `|U| ≥ 1`.
 
 **Archived practices** are excluded from every radar and frame, current and historical. Restoring one brings its history back.
 
-**Archived teams** are excluded from frames from their `archived_at` onwards, and hidden from the team switcher.
+**Archived radars** are excluded from frames from their `archived_at` onwards, and hidden from the radar switcher.
 
 **Frames**
 - Given a scope, a range `[from, to]` and a step (`week` or `month`), the frame dates are:
   - the end of each period in UTC (Sunday 23:59:59 for weeks, the last day of the month at 23:59:59 for months), from the period containing `from` to the period containing `to`,
   - with the last frame replaced by *now* when `to` is today.
 - The default range runs from the earliest `effective_at` in the scope to now, with a monthly step.
-- For a **team** scope, the default range always covers at least the last 12 months, so a new team has past months to backdate into during its first session.
+- For a **radar** scope, the default range always covers at least the last 12 months, so a new radar has past months to backdate into during its first session.
 
 **Backdated edits**
 - A move made while the timeline is unlocked at frame date F is saved with `effective_at = F` and `recorded_at = now`.
@@ -120,11 +120,11 @@ All tables use integer identity primary keys. Timestamps are `timestamptz` store
 **Removal** is a placement with `removed = true`, carrying the last adoption and value so the bubble can animate out. Undo writes a new placement with the previous position.
 
 **Revisions**
-- Every create, update, archive, restore or revert of a team, practice or team note writes one revision.
+- Every create, update, archive, restore or revert of a radar, practice or radar note writes one revision.
 - A practice-page Save is one update, so it writes one revision.
 - Reverting to an old revision writes that snapshot's editable fields back as the current state, increments `version`, and records a `revert` revision.
 
-**Optimistic concurrency.** Updates to teams, practices and team notes must send the `version` they were based on. If it doesn't match the current version, the server returns 409 with the current entity. Placements never conflict.
+**Optimistic concurrency.** Updates to radars, practices and radar notes must send the `version` they were based on. If it doesn't match the current version, the server returns 409 with the current entity. Placements never conflict.
 
 **Duplicate suggestions.** `similar(name)` returns up to 5 practices, archived ones included, with trigram similarity ≥ 0.3, ordered by similarity.
 
@@ -151,7 +151,7 @@ backend/
     config.py, db.py
     models.py          SQLAlchemy models
     schemas.py         Pydantic request and response models
-    routers/           teams.py, practices.py, notes.py, placements.py, revisions.py, radar.py, health.py
+    routers/           radars.py, practices.py, notes.py, placements.py, revisions.py, frames.py, health.py
     services/          frames.py, revisions.py, similarity.py, labels.py
   tests/
 frontend/
@@ -160,7 +160,7 @@ frontend/
     api/               generated OpenAPI types + typed fetch client
     chart/             pure logic (scales, frames, trails, labels) + D3 renderer + React wrapper
     editor/            Rich/Markdown editor component, sanitized markdown renderer
-    pages/             Radar, PracticePage, Catalog, Teams
+    pages/             RadarPage, PracticePage, CatalogPage, RadarListPage
     components/        Drawer, Tray, Timeline, UnsavedChangesBar, NamePrompt, Toasts
   e2e/                 Playwright tests
 docs/
@@ -182,22 +182,22 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 
 | Method and path | Purpose |
 |---|---|
-| `GET /teams?include_archived=` | List teams |
-| `POST /teams` | Create a team → 201, or 409 if the name exists |
-| `PATCH /teams/{id}` | Update the name or description (requires `version`) |
-| `POST /teams/{id}/archive`, `POST /teams/{id}/restore` | Archive or restore a team |
-| `GET /practices?q=&category=&tag=&include_archived=` | Catalog list, including how many teams use each practice |
+| `GET /radars?include_archived=` | List radars |
+| `POST /radars` | Create a radar → 201, or 409 if the name exists |
+| `PATCH /radars/{radar_id}` | Update the name or description (requires `version`) |
+| `POST /radars/{radar_id}/archive`, `POST /radars/{radar_id}/restore` | Archive or restore a radar |
+| `GET /practices?q=&category=&tag=&include_archived=` | Catalog list, including how many radars use each practice |
 | `GET /practices/similar?name=` | Duplicate suggestions |
 | `POST /practices` | Create → 201, or 409 with the existing entry |
-| `GET /practices/{id}` | Full entry, plus each team's current corner label and note |
+| `GET /practices/{id}` | Full entry, plus each radar's current corner label and note |
 | `PATCH /practices/{id}` | Partial update of the fields (requires `version`) |
 | `POST /practices/{id}/archive`, `POST /practices/{id}/restore` | Archive or restore a practice |
-| `GET /teams/{team_id}/notes/{practice_id}` | Read a team's note |
-| `PUT /teams/{team_id}/notes/{practice_id}` | Create or update a note (requires `version`, or 0 to create) |
-| `POST /placements` | Body `{team_id, practice_id, adoption, value, removed?, effective_at?}` → 201. When `removed` is true, `adoption` and `value` are optional and the server copies them from the position as of `effective_at`. Removing a practice that isn't on the radar returns 422. |
+| `GET /radars/{radar_id}/notes/{practice_id}` | Read a radar's note |
+| `PUT /radars/{radar_id}/notes/{practice_id}` | Create or update a note (requires `version`, or 0 to create) |
+| `POST /placements` | Body `{radar_id, practice_id, adoption, value, removed?, effective_at?}` → 201. When `removed` is true, `adoption` and `value` are optional and the server copies them from the position as of `effective_at`. Removing a practice that isn't on the radar returns 422. |
 | `GET /revisions?entity_type=&entity_id=` | Revision history, newest first |
 | `POST /revisions/{id}/revert` | Revert the entity to that revision |
-| `GET /radar/frames?scope=org\|team:{id}&from=&to=&step=week\|month` | Animation frames (see below) |
+| `GET /frames?scope=org\|radar:{id}&from=&to=&step=week\|month` | Animation frames (see below) |
 | `GET /health` | 200 when the database is reachable |
 
 **Frames response**
@@ -214,8 +214,8 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
           "practice_id": 12,
           "adoption": 44,
           "value": 81,
-          "teams": 4,
-          "team_positions": [{"team_id": 3, "adoption": 70, "value": 90}]
+          "radars": 4,
+          "radar_positions": [{"radar_id": 3, "adoption": 70, "value": 90}]
         }
       ]
     }
@@ -224,21 +224,21 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 }
 ```
 
-- `team_positions` is present only for the org scope. It drives the spread shown when an org bubble is selected.
-- In the team scope, `teams` is always 1.
+- `radar_positions` is present only for the org scope. It drives the spread shown when an org bubble is selected.
+- In the radar scope, `radars` is always 1.
 - The API returns adoption and value as numbers, because the chart needs them. The UI simply never displays them.
 
 ## 6. UI
 
-### Radar screen (`/radar/org`, `/radar/team/<id>-<slug>`)
+### Radar screen (`/radar/org`, `/radar/<id>`)
 
 **Top bar**
-- Team/org switcher (the last team is remembered in localStorage)
+- Radar/org switcher (the last radar is remembered in localStorage)
 - Category filter and search
 - "+ New practice"
 - A chip showing "your name"
 
-**Left tray** (team scope only)
+**Left tray** (radar scope only)
 - Catalog practices that are not on the radar at the displayed date, with a text filter.
 - Drag an item onto the chart to place it where you drop it.
 - Each item also has a "Place" button that puts it at the centre, for keyboard users and as a fallback.
@@ -247,44 +247,44 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 - The axes read "Adoption / usage →" and "Perceived value →", with no numbers.
 - Dashed midlines, and faint corner labels *Hidden gems* (top-left), *Core* (top-right), *Question it* (bottom-right) and *Parked* (bottom-left).
 - Colour shows the category: tool, skill, practice or workflow.
-- In the team scope:
+- In the radar scope:
   - Every bubble is the same size.
   - Dragging a bubble writes a placement when it is dropped. The bubble moves immediately and snaps back with a toast if the save fails.
   - A selected bubble can be nudged with the arrow keys, and the new position is saved after a short pause.
   - Dropping a bubble outside the plot area removes the practice, and a toast offers Undo.
 - In the org scope:
   - The chart is read-only.
-  - Bubble size scales with `teams`.
-  - Selecting a bubble fans out one small dot per team at that team's position, each with a thin line to the org bubble and the team's name. Everything else is dimmed.
+  - Bubble size scales with `radars`.
+  - Selecting a bubble fans out one small dot per radar at that radar's position, each with a thin line to the org bubble and the radar's name. Everything else is dimmed.
 
 **Detail drawer** (right side, opens when a bubble is clicked)
 - Category chip, name and summary.
 - The position as a corner label.
-- Team scope: the team's "how we use it" note, which can be edited in place using the same editor.
-- Org scope: a list of the teams using the practice, with their corner labels.
-- Actions: Open page, History, and (team scope only) Remove from radar.
+- Radar scope: the radar's "how we use it" note, which can be edited in place using the same editor.
+- Org scope: a list of the radars using the practice, with their corner labels.
+- Actions: Open page, History, and (radar scope only) Remove from radar.
 
 **Timeline** (under the chart)
 - ▶ play and pause, a scrubber over the frame dates, and a week/month step selector.
 - A large, faint label shows the current frame date behind the chart.
 - During playback bubbles glide between frames (about 800 ms per frame), and bubbles that enter or leave fade in and out.
 - Selected bubbles (shift-click selects several) show a trail: a polyline through their earlier frame positions, with date labels.
-- Editing is locked when the scrubber is not at the latest frame. In the team scope an **"Edit here"** control unlocks it:
+- Editing is locked when the scrubber is not at the latest frame. In the radar scope an **"Edit here"** control unlocks it:
   - the chart gets an amber border and a banner reads "Editing <period>";
   - placements are saved with `effective_at` set to that frame date;
   - it stays unlocked while you scrub, until you lock it again or return to the latest frame.
 
-### Practice page (`/practices/<id>-<slug>`)
+### Practice page (`/practices/<id>`)
 
 - **Main column:** category chip, name, summary, tags, links and the guidance body.
 - **Inline editing:** clicking any field turns it into an inline editor. Changes are only staged, and a sticky bar shows "N unsaved changes · Discard · Save".
   - Save sends a single `PATCH`, which writes one revision.
   - Leaving the page with staged changes triggers an in-app confirmation (and `beforeunload` for tab closes).
-- **Side column:** "Teams using it (N)", listing each team with its corner label and the first lines of its note.
+- **Side column:** "Who’s using it (N)", listing each radar with its corner label and the first lines of its note.
 - **History tab:** revisions with their time, author and action. Selecting one shows that snapshot rendered, with a "Revert to this" button.
 - **Archive and restore** controls are shown.
 
-### Editor component (guidance body and team notes)
+### Editor component (guidance body and radar notes)
 
 - A **Rich / Markdown** toggle. The chosen mode is remembered in localStorage.
 - **Rich** mode is a markdown-native WYSIWYG editor.
@@ -295,10 +295,10 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 
 ### Other pages
 
-- **Catalog (`/practices`):** a table with name, category, tags and the number of teams using each practice. It has search, category and tag filters, and a "show archived" toggle.
+- **Catalog (`/practices`):** a table with name, category, tags and the number of radars using each practice. It has search, category and tag filters, and a "show archived" toggle.
   - "+ New practice" opens a form. After a short pause while you type the name, it shows "Did you mean…" suggestions.
   - A 409 response offers to open the existing entry, or to restore it if it is archived.
-- **Teams (`/teams`):** list, create, rename, archive and restore teams.
+- **Radars (`/radars`):** list, create, rename, archive and restore radars.
 - **Name prompt:** a modal shown before the first write in a browser. It stores `aiRadar.editedBy` in localStorage.
   - "Skip" stores an empty value, so the person is not asked again and edits are shown as anonymous.
   - Clicking the top-bar chip changes the name.
@@ -344,8 +344,8 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 - `services/frames.py` gets the most thorough unit tests:
   - "as of" logic, including the `effective_at`/`recorded_at`/`id` tie-break
   - removed placements, and undo after a removal
-  - which teams count as active: backdated teams, archived teams
-  - the org average counting non-users as 0, and team counts
+  - which radars count as active: backdated radars, archived radars
+  - the org average counting non-users as 0, and radar counts
   - week and month boundaries, and the final "now" frame
   - archived practices being excluded
 - Also covered:
@@ -362,7 +362,7 @@ The API uses REST and JSON under `/api`. Every write accepts the `X-Edited-By` h
 - D3 rendering is only smoke-tested.
 
 **End-to-end** (Playwright smoke test in CI)
-1. Create a team.
+1. Create a radar.
 2. Create a practice, and check that a duplicate suggestion appears.
 3. Place it from the tray.
 4. Unlock a past month and backdate a move.
@@ -413,7 +413,7 @@ Implementation follows TDD.
 - Import and export (a CSV export is a likely first addition)
 - Multiple organizations or tenants
 - Staging environments, deployment slots and infrastructure as code
-- Comparing teams side by side as small multiples
+- Comparing radars side by side as small multiples
 
 ## 11. Open items for implementation planning
 
