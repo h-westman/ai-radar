@@ -250,7 +250,7 @@ export default function RadarPage() {
             <p className={styles.empty}>
               {scope === 'radar'
                 ? 'Drag practices from the tray onto the chart to start this radar.'
-                : 'No team has placed anything yet.'}
+                : 'Nobody has placed anything yet.'}
             </p>
           )}
         </div>
