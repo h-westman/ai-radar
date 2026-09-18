@@ -6,7 +6,6 @@ import { type Category, type Practice } from '../api/types'
 import CategoryRadios from '../components/CategoryRadios'
 import { useNamePrompt } from '../components/NamePrompt'
 import { useToast } from '../components/Toasts'
-import { toRef } from '../lib/refs'
 import { useDebounced } from '../lib/useDebounced'
 import styles from './Pages.module.css'
 
@@ -22,7 +21,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
   const create = useCreatePractice()
   const setArchived = useSetPracticeArchived()
 
-  const open = (p: { id: number; slug: string }) => navigate(`/practices/${toRef(p.id, p.slug)}`)
+  const open = (p: { id: number }) => navigate(`/practices/${p.id}`)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -69,7 +68,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
           <ul>
             {similar.map((p) => (
               <li key={p.id}>
-                <Link to={`/practices/${toRef(p.id, p.slug)}`}>{p.name}</Link>
+                <Link to={`/practices/${p.id}`}>{p.name}</Link>
                 {p.archived_at && <span className={styles.badge}>Archived</span>}
               </li>
             ))}
@@ -89,7 +88,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
               Restore it
             </button>
           ) : (
-            <Link to={`/practices/${toRef(conflict.id, conflict.slug)}`}>Open it</Link>
+            <Link to={`/practices/${conflict.id}`}>Open it</Link>
           )}
         </p>
       )}

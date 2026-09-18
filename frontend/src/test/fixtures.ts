@@ -24,7 +24,6 @@ export const radar = (over: Partial<Radar> = {}): Radar => ({
 export const practice = (over: Partial<Practice> = {}): Practice => ({
   id: 10,
   name: 'Claude Code',
-  slug: 'claude-code',
   category: 'tool',
   summary: 'Agentic coding assistant.',
   body_md: '## Getting started\n\nInstall it.',
@@ -40,7 +39,6 @@ export const practice = (over: Partial<Practice> = {}): Practice => ({
 export const listItem = (over: Partial<PracticeListItem> = {}): PracticeListItem => ({
   id: 10,
   name: 'Claude Code',
-  slug: 'claude-code',
   category: 'tool',
   summary: 'Agentic coding assistant.',
   tags: ['agentic'],

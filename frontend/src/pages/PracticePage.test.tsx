@@ -17,14 +17,12 @@ beforeEach(() => {
   setEditedBy('Kim')
   localStorage.setItem(EDITOR_MODE_KEY, 'markdown')
   current = detail({
-    teams: [
-      { team_id: 1, team_name: 'Platform', team_slug: 'platform', label: 'Core', note_md: '## Notes\nRefactors and tests.' },
-    ],
+    radars: [{ radar_id: 1, radar_name: 'Platform', label: 'Core', note_md: '## Notes\nRefactors and tests.' }],
   })
   patches = []
   reverted = []
   server.use(
-    http.get('/api/teams', () => HttpResponse.json([])),
+    http.get('/api/radars', () => HttpResponse.json([])),
     http.get('/api/practices', () => HttpResponse.json([])),
     http.get('/api/practices/10', () => HttpResponse.json(current)),
     http.patch('/api/practices/10', async ({ request }) => {
@@ -50,7 +48,7 @@ beforeEach(() => {
   )
 })
 
-const open = () => renderRoutes('/practices/10-claude-code')
+const open = () => renderRoutes('/practices/10')
 
 async function editSummary(text: string) {
   await userEvent.click(await screen.findByRole('button', { name: 'Edit summary' }))
@@ -78,13 +76,18 @@ describe('PracticePage', () => {
     ).toBeInTheDocument()
   })
 
-  it('shows the entry and the teams using it', async () => {
+  it('shows the entry and who is using it', async () => {
     open()
     expect(await screen.findByRole('heading', { name: 'Claude Code' })).toBeInTheDocument()
-    const teams = screen.getByRole('complementary', { name: 'Teams using it' })
-    expect(within(teams).getByRole('link', { name: 'Platform' })).toHaveAttribute('href', '/radar/team/1-platform')
-    expect(within(teams).getByText('Core', { exact: false })).toBeInTheDocument()
-    expect(within(teams).getByText(/Refactors and tests\./)).toBeInTheDocument()
+    const usage = screen.getByRole('complementary', { name: 'Who’s using it' })
+    expect(within(usage).getByRole('link', { name: 'Platform' })).toHaveAttribute('href', '/radar/1')
+    expect(within(usage).getByText('Core', { exact: false })).toBeInTheDocument()
+    expect(within(usage).getByText(/Refactors and tests\./)).toBeInTheDocument()
+  })
+
+  it('opens a practice by bare id and names the usage aside', async () => {
+    renderRoutes('/practices/10')
+    expect(await screen.findByRole('complementary', { name: 'Who’s using it' })).toBeInTheDocument()
   })
 
   it('stages several inline edits and saves them in one PATCH', async () => {
@@ -134,7 +137,7 @@ describe('PracticePage', () => {
   })
 
   it('shows a name-conflict alert without corrupting the cache when renaming collides with another practice', async () => {
-    const other = practice({ id: 7, slug: 'other-practice', name: 'Other Practice', version: 5, summary: 'Belongs to someone else.' })
+    const other = practice({ id: 7, name: 'Other Practice', version: 5, summary: 'Belongs to someone else.' })
     server.use(
       http.patch('/api/practices/10', async ({ request }) => {
         const body = (await request.json()) as PracticeUpdate
@@ -152,10 +155,7 @@ describe('PracticePage', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('A practice named "Other Practice" already exists.')
-    expect(within(alert).getByRole('link', { name: 'Open it' })).toHaveAttribute(
-      'href',
-      '/practices/7-other-practice',
-    )
+    expect(within(alert).getByRole('link', { name: 'Open it' })).toHaveAttribute('href', '/practices/7')
     // The cache for practice 10 must be untouched by the other practice's record.
     expect(screen.getByText('Agentic coding assistant.')).toBeInTheDocument()
 
@@ -187,7 +187,7 @@ describe('PracticePage', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Catalog' }))
     const dialog = await screen.findByRole('dialog', { name: 'Discard unsaved changes?' })
     await userEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
-    expect(router.state.location.pathname).toBe('/practices/10-claude-code')
+    expect(router.state.location.pathname).toBe('/practices/10')
     await userEvent.click(screen.getByRole('link', { name: 'Catalog' }))
     await userEvent.click(await screen.findByRole('button', { name: 'Discard changes' }))
     await waitFor(() => expect(router.state.location.pathname).toBe('/practices'))

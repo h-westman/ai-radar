@@ -26,7 +26,7 @@ import UnsavedChangesBar from '../components/UnsavedChangesBar'
 import Editor from '../editor/Editor'
 import MarkdownView from '../editor/MarkdownView'
 import { categoryOptionText } from '../lib/categories'
-import { idFromRef, toRef } from '../lib/refs'
+import { parseId } from '../lib/ids'
 import styles from './Pages.module.css'
 
 type Field = 'name' | 'category' | 'summary' | 'tags' | 'links' | 'body_md'
@@ -43,8 +43,8 @@ const excerpt = (md: string) =>
     .slice(0, 160)
 
 export default function PracticePage() {
-  const { practiceRef } = useParams()
-  const id = idFromRef(practiceRef)
+  const { practiceId: practiceRef } = useParams()
+  const id = parseId(practiceRef)
   const [params, setParams] = useSearchParams()
   const tab = params.get('tab') === 'history' ? 'history' : 'overview'
   const { data: practice, isError } = usePractice(id)
@@ -226,7 +226,7 @@ function Overview({ practice }: { practice: PracticeDetail }) {
       const current = conflictCurrent<Practice>(err)
       if (current && current.id !== practice.id) {
         // A duplicate-name conflict carries the OTHER practice as `current`. Merging it into
-        // this practice's cache entry would corrupt its id/version/slug, so leave the cache
+        // this practice's cache entry would corrupt its id/version, so leave the cache
         // alone and just surface a message with a link to the existing practice.
         setNameConflict(current)
         return
@@ -254,7 +254,7 @@ function Overview({ practice }: { practice: PracticeDetail }) {
       {nameConflict && (
         <p role="alert" className={styles.error}>
           A practice named "{view.name}" already exists.{' '}
-          <Link to={`/practices/${toRef(nameConflict.id, nameConflict.slug)}`}>Open it</Link>
+          <Link to={`/practices/${nameConflict.id}`}>Open it</Link>
         </p>
       )}
       <div className={styles.practiceLayout}>
@@ -324,14 +324,14 @@ function Overview({ practice }: { practice: PracticeDetail }) {
             <Editor value={view.body_md} onChange={(value) => stage('body_md', value)} label="Guidance" />
           </InlineField>
         </article>
-        <aside className={styles.card} aria-label="Teams using it">
-          <h2 style={{ margin: 0, fontSize: 16 }}>Teams using it ({practice.teams.length})</h2>
-          {practice.teams.length === 0 && <p className={styles.muted}>No team has this on its radar yet.</p>}
+        <aside className={styles.card} aria-label="Who’s using it">
+          <h2 style={{ margin: 0, fontSize: 16 }}>Who’s using it ({practice.radars.length})</h2>
+          {practice.radars.length === 0 && <p className={styles.muted}>Nobody has this on their radar yet.</p>}
           <ul style={{ margin: 0, paddingLeft: 18 }}>
-            {practice.teams.map((t) => (
-              <li key={t.team_id}>
-                <Link to={`/radar/team/${toRef(t.team_id, t.team_slug)}`}>{t.team_name}</Link> · {t.label}
-                {t.note_md && <p className={styles.muted}>{excerpt(t.note_md)}</p>}
+            {practice.radars.map((r) => (
+              <li key={r.radar_id}>
+                <Link to={`/radar/${r.radar_id}`}>{r.radar_name}</Link> · {r.label}
+                {r.note_md && <p className={styles.muted}>{excerpt(r.note_md)}</p>}
               </li>
             ))}
           </ul>

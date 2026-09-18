@@ -90,7 +90,7 @@ export default function RadarListPage() {
           editingId === r.id ? (
             <RadarEditor key={r.id} radar={r} onDone={() => setEditingId(null)} />
           ) : (
-            <li key={r.id} className={styles.teamRow}>
+            <li key={r.id} className={styles.radarRow}>
               <div>
                 <Link to={`/radar/${r.id}`}>{r.name}</Link>
                 {r.archived_at && <span className={styles.badge}>Archived</span>}
@@ -144,7 +144,7 @@ function RadarEditor({ radar, onDone }: { radar: Radar; onDone: () => void }) {
   }
 
   return (
-    <li className={styles.teamRow}>
+    <li className={styles.radarRow}>
       <form onSubmit={onSave} style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
         <input aria-label={`New name for ${radar.name}`} value={name} onChange={(e) => setName(e.target.value)} />
         <input
