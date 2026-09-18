@@ -123,8 +123,10 @@ the TypeScript compiler enumerates every frontend break.
 | `/practices/45-claude-code` | `/practices/45` |
 | `/teams` | `/radars` |
 
-`/radar/org` cannot collide with `/radar/12`: the id route accepts digits only, and React
-Router ranks static segments above dynamic ones.
+`/radar/org` cannot collide with `/radar/12`: React Router ranks the static `/radar/org`
+segment above the dynamic `/radar/:radarId`, and `parseId` returns null for `'org'` (the
+route itself matches any single segment, not digits only - do not simplify `parseId` away
+on the assumption that the router alone protects this).
 
 `src/lib/refs.ts` is replaced by `src/lib/ids.ts` exporting a single
 `parseId(raw: string | undefined): number | null` that returns null unless the value is a

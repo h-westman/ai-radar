@@ -1,5 +1,8 @@
 # AI Radar Plan 1: Backend Implementation Plan
 
+*Historical record, superseded by the Team->Radar rename of 2026-09-17. Current API paths
+live in `docs/superpowers/specs/2026-09-17-radar-rename-design.md`.*
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the complete AI Radar HTTP API: teams, the practice catalog, team notes, append-only placements, revisions with revert, duplicate suggestions and animation frames. It also serves the built SPA.

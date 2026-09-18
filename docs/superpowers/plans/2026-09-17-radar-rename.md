@@ -779,17 +779,23 @@ The rename is done when all of these hold:
 ```bash
 cd /Users/hans/dev/ai-radar/backend && uv run pytest
 cd /Users/hans/dev/ai-radar/frontend && npm run typecheck && npm test && npm run check:api && npm run build
-grep -rin "team" frontend/src backend/app
+grep -rin "team" frontend/src backend/app backend/tests
 grep -rin "slug" frontend/src backend/app          # no output
 ```
 
-The `team` grep is expected to return exactly two hits, both prose about a human team, not
-the renamed entity, and both deliberately preserved (see Task 9's brief, §1 Purpose in
-`docs/superpowers/specs/2026-09-13-ai-radar-design.md` for the same distinction):
+The `team` grep is scoped to source and tests (not just `backend/app`, since a rename that
+never checked `backend/tests` can leave renamed identifiers' old names behind there
+unnoticed) and is expected to return exactly four lines from three locations: two are
+prose about a human team, not the renamed entity, and deliberately preserved (see Task 9's
+brief, §1 Purpose in `docs/superpowers/specs/2026-09-13-ai-radar-design.md` for the same
+distinction); the other two are the name and body of one deliberately preserved test that
+asserts the OLD `team:1` scope string is now rejected:
 
 ```
 frontend/src/lib/categories.ts:24:    description: 'a habit your team applies while working',
 frontend/src/pages/CatalogPage.test.tsx:102:      /a habit your team applies while working/i,
+backend/tests/api/test_radar.py:152:def test_frames_endpoint_rejects_team_scope(client):
+backend/tests/api/test_radar.py:153:    assert client.get("/api/frames", params={"scope": "team:1"}).status_code == 422
 ```
 
 Any other `team` hit is a real regression; a `grep` returning no output at all is not

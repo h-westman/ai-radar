@@ -11,10 +11,10 @@ def end_of(y, m, d):
     return datetime(y, m, d, 23, 59, 59, tzinfo=UTC)
 
 
-def row(id, *, eff, rec=None, team=1, practice=1, adoption=50, value=50, removed=False):
+def row(id, *, eff, rec=None, radar=1, practice=1, adoption=50, value=50, removed=False):
     return PlacementRow(
         id=id,
-        radar_id=team,
+        radar_id=radar,
         practice_id=practice,
         adoption=adoption,
         value=value,
@@ -109,11 +109,11 @@ def test_full_tie_highest_id_wins():
     assert latest_as_of(rows, dt(2026, 4, 1))[(1, 1)].id == 7
 
 
-def test_keys_are_per_team_and_practice_and_removed_rows_are_kept():
+def test_keys_are_per_radar_and_practice_and_removed_rows_are_kept():
     rows = [
-        row(1, eff=dt(2026, 1, 1), team=1, practice=1),
-        row(2, eff=dt(2026, 1, 1), team=2, practice=1, removed=True),
-        row(3, eff=dt(2026, 1, 1), team=1, practice=2),
+        row(1, eff=dt(2026, 1, 1), radar=1, practice=1),
+        row(2, eff=dt(2026, 1, 1), radar=2, practice=1, removed=True),
+        row(3, eff=dt(2026, 1, 1), radar=1, practice=2),
     ]
     result = latest_as_of(rows, dt(2026, 2, 1))
     assert set(result) == {(1, 1), (2, 1), (1, 2)}

@@ -2,6 +2,11 @@
 
 Revision ID: 0001
 Revises:
+
+Rewritten in place (same revision id) for the Team->Radar rename of 2026-09-17, since
+nothing was deployed under the old schema. If you have an existing local database volume,
+`alembic upgrade head` will now no-op against it and later fail confusingly against the old
+`teams` tables - run `docker compose down -v` to recreate it before upgrading.
 """
 
 import sqlalchemy as sa
