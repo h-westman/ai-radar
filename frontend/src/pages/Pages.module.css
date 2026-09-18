@@ -13,6 +13,7 @@
 }
 .tag:hover { border-color: var(--border-tab); color: var(--text); background: var(--surface-2); }
 .error {
+  display: inline-block;
   color: var(--danger);
   background: var(--danger-subtle);
   border: 1px solid var(--danger);
@@ -20,9 +21,12 @@
   padding: var(--space-2) var(--space-3);
 }
 /* Tabs: an ink underline on the selected tab, after the Volvo border-tab token.
-   Before this the Overview/History tabs had no selected state at all. */
-.tablist { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--border); }
-.tablist button {
+   Before this the Overview/History tabs had no selected state at all.
+   Scoped to [role='tab'] so a non-tab child sharing .tablist keeps its own button
+   affordance instead of rendering as a permanently-unselected tab. */
+.tablistRow { display: flex; align-items: center; gap: var(--space-3); }
+.tablist { display: flex; gap: var(--space-4); border-bottom: 1px solid var(--border); flex: 1; }
+.tablist button[role='tab'] {
   border: none;
   background: none;
   border-radius: 0;
@@ -31,7 +35,7 @@
   border-bottom: 2px solid transparent;
   color: var(--text-muted);
 }
-.tablist button[aria-selected='true'] {
+.tablist button[role='tab'][aria-selected='true'] {
   border-bottom-color: var(--border-tab);
   color: var(--text);
   font-weight: 600;

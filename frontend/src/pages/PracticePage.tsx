@@ -85,17 +85,17 @@ export default function PracticePage() {
           <button onClick={() => toggleArchived(practice)}>Restore practice</button>
         </div>
       )}
-      <div role="tablist" aria-label="Practice sections" className={styles.tablist}>
-        <button role="tab" aria-selected={tab === 'overview'} onClick={() => setParams({})}>
-          Overview
-        </button>
-        <button role="tab" aria-selected={tab === 'history'} onClick={() => setParams({ tab: 'history' })}>
-          History
-        </button>
-        {!practice.archived_at && (
-          <button style={{ marginLeft: 'auto' }} onClick={() => toggleArchived(practice)}>
-            Archive practice
+      <div className={styles.tablistRow}>
+        <div role="tablist" aria-label="Practice sections" className={styles.tablist}>
+          <button role="tab" aria-selected={tab === 'overview'} onClick={() => setParams({})}>
+            Overview
           </button>
+          <button role="tab" aria-selected={tab === 'history'} onClick={() => setParams({ tab: 'history' })}>
+            History
+          </button>
+        </div>
+        {!practice.archived_at && (
+          <button onClick={() => toggleArchived(practice)}>Archive practice</button>
         )}
       </div>
       {tab === 'overview' ? (

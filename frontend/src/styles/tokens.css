@@ -9,10 +9,9 @@
   --surface-2: #e1e1e1;
   --border: #d0d0d0;
   --text: #212121;
-  --text-muted: #6b6b6b;
+  --text-muted: #616161;
 
   --accent: #0f7a84;
-  --accent-contrast: #ffffff;
 
   /* Links, from the Volvo Group system. Deliberately darker than the blue used
      for the "tool" category so a chip dot never reads as a link. */
@@ -22,9 +21,6 @@
   --danger: #bf2012;
   --danger-subtle: #f8dddb;
   --success: #177844;
-  --success-subtle: #d8efde;
-  --warning: #ad5100;
-  --warning-subtle: #fff3de;
 
   /* Ink, not a hue: a selected bubble's ring must stay visible on every category colour. */
   --selected: #212121;
@@ -40,9 +36,9 @@
   --button-disabled-bg: #e1e1e1;
   --button-disabled-text: #a9a9a9;
 
-  /* Radar categories. Validated as a set with the dataviz validator under --pairs all
-     (every bubble is on screen at once): worst pair CVD dE 9.2, normal-vision 19.8.
-     Do not restep one of these alone - revalidate the four together. */
+  /* Radar categories, LIGHT set. Validated as a set with the dataviz validator under
+     --pairs all (every bubble is on screen at once): worst pair CVD dE 9.2, normal-vision
+     19.8. Do not restep one of these alone - revalidate the four together. */
   --cat-tool: #2a78d6;
   --cat-skill: #1baf7a;
   --cat-practice: #eb6834;
@@ -75,9 +71,6 @@
     --danger: #ff6b54;
     --danger-subtle: #4c2821;
     --success: #6cc17a;
-    --success-subtle: #1e3d28;
-    --warning: #ffb54d;
-    --warning-subtle: #593c11;
     --selected: #ffffff;
     --border-tab: #ffffff;
     --border-input-active: #61a0e8;
@@ -94,8 +87,12 @@
     --button-disabled-bg: #3d3d3d;
     --button-disabled-text: #6b6b6b;
 
-    --cat-tool: #3987e5;
-    --cat-skill: #199e70;
+    /* Radar categories, DARK set (own hues, not a dark-mode filter of the light set).
+       Validated as a set with the dataviz validator under --pairs all: worst pair CVD
+       dE 9.3 (deutan) with tritan 7.0, normal-vision 18.4, all four >=3:1 against
+       --surface-2 (dark). Do not restep one of these alone - revalidate the four together. */
+    --cat-tool: #4a90e8;
+    --cat-skill: #1a9464;
     --cat-practice: #d95926;
     --cat-workflow: #b45fae;
     --edit-past: #ffb54d;
