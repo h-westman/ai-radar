@@ -20,13 +20,12 @@ class ORMModel(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- Teams -------------------------------------------------------------------
+# --- Radars ------------------------------------------------------------------
 
 
-class TeamOut(ORMModel):
+class RadarOut(ORMModel):
     id: int
     name: str
-    slug: str
     description: str | None
     version: int
     created_at: datetime
@@ -34,12 +33,12 @@ class TeamOut(ORMModel):
     archived_at: datetime | None
 
 
-class TeamCreate(BaseModel):
+class RadarCreate(BaseModel):
     name: Name
     description: Description | None = None
 
 
-class TeamUpdate(BaseModel):
+class RadarUpdate(BaseModel):
     version: int
     name: Name | None = None
     description: Description | None = None
@@ -76,7 +75,6 @@ def _unique(tags: list[str] | None) -> list[str] | None:
 class PracticeOut(ORMModel):
     id: int
     name: str
-    slug: str
     category: Category
     summary: str
     body_md: str
@@ -91,12 +89,11 @@ class PracticeOut(ORMModel):
 class PracticeListItem(ORMModel):
     id: int
     name: str
-    slug: str
     category: Category
     summary: str
     tags: list[str]
     archived_at: datetime | None
-    teams_count: int = 0
+    radars_count: int = 0
 
 
 class PracticeCreate(BaseModel):
@@ -135,16 +132,15 @@ class PracticeUpdate(BaseModel):
         return _unique(tags)
 
 
-class PracticeTeamUsage(BaseModel):
-    team_id: int
-    team_name: str
-    team_slug: str
+class PracticeRadarUsage(BaseModel):
+    radar_id: int
+    radar_name: str
     label: str
     note_md: str | None
 
 
 class PracticeDetail(PracticeOut):
-    teams: list[PracticeTeamUsage]
+    radars: list[PracticeRadarUsage]
 
 
 # --- Placements --------------------------------------------------------------
@@ -153,7 +149,7 @@ Score = Annotated[int, Field(ge=0, le=100)]
 
 
 class PlacementCreate(BaseModel):
-    team_id: int
+    radar_id: int
     practice_id: int
     adoption: Score | None = None
     value: Score | None = None
@@ -169,7 +165,7 @@ class PlacementCreate(BaseModel):
 
 class PlacementOut(ORMModel):
     id: int
-    team_id: int
+    radar_id: int
     practice_id: int
     adoption: int
     value: int
@@ -179,11 +175,11 @@ class PlacementOut(ORMModel):
     edited_by: str | None
 
 
-# --- Team notes --------------------------------------------------------------
+# --- Radar notes -------------------------------------------------------------
 
 
 class NoteOut(ORMModel):
-    team_id: int
+    radar_id: int
     practice_id: int
     body_md: str
     version: int
@@ -198,7 +194,7 @@ class NotePut(BaseModel):
 
 # --- Revisions ---------------------------------------------------------------
 
-EntityType = Literal["team", "practice", "team_note"]
+EntityType = Literal["radar", "practice", "radar_note"]
 
 
 class RevisionOut(ORMModel):
@@ -219,8 +215,8 @@ class RevertOut(BaseModel):
 # --- Radar frames ------------------------------------------------------------
 
 
-class TeamPositionOut(ORMModel):
-    team_id: int
+class RadarPositionOut(ORMModel):
+    radar_id: int
     adoption: int
     value: int
 
@@ -229,8 +225,8 @@ class PointOut(ORMModel):
     practice_id: int
     adoption: int
     value: int
-    teams: int
-    team_positions: list[TeamPositionOut] | None = None
+    radars: int
+    radar_positions: list[RadarPositionOut] | None = None
 
 
 class FrameOut(ORMModel):

@@ -2,71 +2,73 @@ import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
-import type { Team } from '../api/types'
+import type { Radar } from '../api/types'
 import { setEditedBy } from '../lib/editedBy'
-import { team } from '../test/fixtures'
+import { radar } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
 
-let teams: Team[]
+let radars: Radar[]
 let lastPatch: unknown
 
 beforeEach(() => {
   setEditedBy('Kim')
-  teams = [team()]
+  radars = [radar()]
   lastPatch = undefined
   server.use(
-    http.get('/api/teams', ({ request }) => {
+    http.get('/api/radars', ({ request }) => {
       const all = new URL(request.url).searchParams.get('include_archived') === 'true'
-      return HttpResponse.json(teams.filter((t) => all || !t.archived_at))
+      return HttpResponse.json(radars.filter((r) => all || !r.archived_at))
     }),
-    http.post('/api/teams', async ({ request }) => {
+    http.post('/api/radars', async ({ request }) => {
       const body = (await request.json()) as { name: string }
-      const existing = teams.find((t) => t.name.toLowerCase() === body.name.toLowerCase())
+      const existing = radars.find((r) => r.name.toLowerCase() === body.name.toLowerCase())
       if (existing) return HttpResponse.json({ detail: 'exists', current: existing }, { status: 409 })
-      const created = team({ id: teams.length + 1, name: body.name, slug: body.name.toLowerCase() })
-      teams.push(created)
+      const created = radar({ id: radars.length + 1, name: body.name })
+      radars.push(created)
       return HttpResponse.json(created, { status: 201 })
     }),
-    http.patch('/api/teams/:id', async ({ params, request }) => {
+    http.patch('/api/radars/:id', async ({ params, request }) => {
       lastPatch = await request.json()
-      const t = teams.find((x) => x.id === Number(params.id))!
-      Object.assign(t, lastPatch as object, { version: t.version + 1 })
-      return HttpResponse.json(t)
+      const r = radars.find((x) => x.id === Number(params.id))!
+      Object.assign(r, lastPatch as object, { version: r.version + 1 })
+      return HttpResponse.json(r)
     }),
-    http.post('/api/teams/:id/:action', ({ params }) => {
-      const t = teams.find((x) => x.id === Number(params.id))!
-      t.archived_at = params.action === 'archive' ? '2026-03-01T00:00:00Z' : null
-      return HttpResponse.json(t)
+    http.post('/api/radars/:id/:action', ({ params }) => {
+      const r = radars.find((x) => x.id === Number(params.id))!
+      r.archived_at = params.action === 'archive' ? '2026-03-01T00:00:00Z' : null
+      return HttpResponse.json(r)
     }),
   )
 })
 
-const list = () => screen.getByRole('list', { name: 'Teams' })
+const list = () => screen.getByRole('list', { name: 'Radars' })
 
-describe('TeamsPage', () => {
-  it('lists teams linking to their radars', async () => {
-    renderRoutes('/teams')
-    const link = await within(await screen.findByRole('list', { name: 'Teams' })).findByRole('link', { name: 'Platform' })
-    expect(link).toHaveAttribute('href', '/radar/team/1-platform')
+describe('RadarListPage', () => {
+  it('lists radars linking to their radar pages', async () => {
+    renderRoutes('/radars')
+    const link = await within(await screen.findByRole('list', { name: 'Radars' })).findByRole('link', {
+      name: 'Platform',
+    })
+    expect(link).toHaveAttribute('href', '/radar/1')
   })
 
-  it('creates a team', async () => {
-    renderRoutes('/teams')
-    await userEvent.type(screen.getByRole('textbox', { name: 'Team name' }), 'Payments')
-    await userEvent.click(screen.getByRole('button', { name: 'Create team' }))
+  it('creates a radar', async () => {
+    renderRoutes('/radars')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Radar name' }), 'Payments')
+    await userEvent.click(screen.getByRole('button', { name: 'Create radar' }))
     expect(await within(list()).findByRole('link', { name: 'Payments' })).toBeInTheDocument()
   })
 
   it('explains duplicate names', async () => {
-    renderRoutes('/teams')
-    await userEvent.type(screen.getByRole('textbox', { name: 'Team name' }), 'platform')
-    await userEvent.click(screen.getByRole('button', { name: 'Create team' }))
+    renderRoutes('/radars')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Radar name' }), 'platform')
+    await userEvent.click(screen.getByRole('button', { name: 'Create radar' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/already exists/i)
   })
 
   it('renames with the current version', async () => {
-    renderRoutes('/teams')
+    renderRoutes('/radars')
     await userEvent.click(await screen.findByRole('button', { name: 'Rename Platform' }))
     const input = screen.getByRole('textbox', { name: 'New name for Platform' })
     await userEvent.clear(input)
@@ -77,7 +79,7 @@ describe('TeamsPage', () => {
   })
 
   it('archives and restores', async () => {
-    renderRoutes('/teams')
+    renderRoutes('/radars')
     await userEvent.click(await screen.findByRole('button', { name: 'Archive Platform' }))
     await waitFor(() => expect(within(list()).queryByText('Platform')).not.toBeInTheDocument())
     await userEvent.click(screen.getByRole('checkbox', { name: 'Show archived' }))
@@ -87,35 +89,35 @@ describe('TeamsPage', () => {
 
   it('shows toast when archive fails', async () => {
     server.use(
-      http.post('/api/teams/:id/:action', () => {
+      http.post('/api/radars/:id/:action', () => {
         return HttpResponse.json({ detail: 'Server error' }, { status: 500 })
       }),
     )
-    renderRoutes('/teams')
+    renderRoutes('/radars')
     await userEvent.click(await screen.findByRole('button', { name: 'Archive Platform' }))
-    expect(await screen.findByRole('status')).toHaveTextContent(/Could not update the team/i)
+    expect(await screen.findByRole('status')).toHaveTextContent(/Could not update the radar/i)
     expect(await within(list()).findByRole('link', { name: 'Platform' })).toBeInTheDocument()
   })
 
-  it('refreshes the team version after a rename conflict so a retry succeeds', async () => {
+  it('refreshes the radar version after a rename conflict so a retry succeeds', async () => {
     let attempt = 0
     server.use(
-      http.patch('/api/teams/:id', async ({ params, request }) => {
+      http.patch('/api/radars/:id', async ({ params, request }) => {
         attempt += 1
         const body = (await request.json()) as { version: number; name: string; description: string | null }
         if (attempt === 1) {
-          // Someone else renamed the team first: bump its version server-side and report a conflict.
-          const t = teams.find((x) => x.id === Number(params.id))!
-          t.version = 2
+          // Someone else renamed the radar first: bump its version server-side and report a conflict.
+          const r = radars.find((x) => x.id === Number(params.id))!
+          r.version = 2
           return HttpResponse.json({ detail: 'exists' }, { status: 409 })
         }
         lastPatch = body
-        const t = teams.find((x) => x.id === Number(params.id))!
-        Object.assign(t, body, { version: t.version + 1 })
-        return HttpResponse.json(t)
+        const r = radars.find((x) => x.id === Number(params.id))!
+        Object.assign(r, body, { version: r.version + 1 })
+        return HttpResponse.json(r)
       }),
     )
-    renderRoutes('/teams')
+    renderRoutes('/radars')
     await userEvent.click(await screen.findByRole('button', { name: 'Rename Platform' }))
     const input = screen.getByRole('textbox', { name: 'New name for Platform' })
     await userEvent.clear(input)
@@ -129,16 +131,16 @@ describe('TeamsPage', () => {
 
   it('shows toast when rename fails', async () => {
     server.use(
-      http.patch('/api/teams/:id', () => {
+      http.patch('/api/radars/:id', () => {
         return HttpResponse.json({ detail: 'Server error' }, { status: 500 })
       }),
     )
-    renderRoutes('/teams')
+    renderRoutes('/radars')
     await userEvent.click(await screen.findByRole('button', { name: 'Rename Platform' }))
     const input = screen.getByRole('textbox', { name: 'New name for Platform' })
     await userEvent.clear(input)
     await userEvent.type(input, 'Core')
     await userEvent.click(screen.getByRole('button', { name: 'Save' }))
-    expect(await screen.findByRole('status')).toHaveTextContent(/Could not save the team/i)
+    expect(await screen.findByRole('status')).toHaveTextContent(/Could not save the radar/i)
   })
 })

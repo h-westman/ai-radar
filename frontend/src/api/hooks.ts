@@ -12,9 +12,9 @@ import type {
   PlacementCreate,
   PracticeCreate,
   PracticeUpdate,
+  RadarCreate,
+  RadarUpdate,
   Step,
-  TeamCreate,
-  TeamUpdate,
 } from './types'
 
 export type PracticeFilters = {
@@ -25,34 +25,34 @@ export type PracticeFilters = {
 }
 
 export const keys = {
-  teams: (includeArchived = false) => ['teams', { includeArchived }] as const,
-  team: (id: number) => ['team', id] as const,
+  radars: (includeArchived = false) => ['radars', { includeArchived }] as const,
+  radar: (id: number) => ['radar', id] as const,
   practices: (filters: PracticeFilters = {}) => ['practices', filters] as const,
   practice: (id: number) => ['practice', id] as const,
   similar: (name: string) => ['similar', name] as const,
-  note: (teamId: number, practiceId: number) => ['note', teamId, practiceId] as const,
+  note: (radarId: number, practiceId: number) => ['note', radarId, practiceId] as const,
   revisions: (type: EntityType, entityId: string) => ['revisions', type, entityId] as const,
   frames: (scope: string, step: Step) => ['frames', scope, step] as const,
 }
 
 // --- Queries -------------------------------------------------------------------
 
-export function useTeams(includeArchived = false) {
+export function useRadars(includeArchived = false) {
   return useQuery({
-    queryKey: keys.teams(includeArchived),
+    queryKey: keys.radars(includeArchived),
     queryFn: async () =>
       unwrap(
-        await api.GET('/api/teams', { params: { query: { include_archived: includeArchived } } }),
+        await api.GET('/api/radars', { params: { query: { include_archived: includeArchived } } }),
       ),
   })
 }
 
-export function useTeam(id: number | null) {
+export function useRadar(id: number | null) {
   return useQuery({
-    queryKey: keys.team(id ?? -1),
+    queryKey: keys.radar(id ?? -1),
     enabled: id !== null,
     queryFn: async () =>
-      unwrap(await api.GET('/api/teams/{team_id}', { params: { path: { team_id: id! } } })),
+      unwrap(await api.GET('/api/radars/{radar_id}', { params: { path: { radar_id: id! } } })),
   })
 }
 
@@ -97,13 +97,13 @@ export function useSimilar(name: string) {
   })
 }
 
-export function useNote(teamId: number | null, practiceId: number | null) {
+export function useNote(radarId: number | null, practiceId: number | null) {
   return useQuery({
-    queryKey: keys.note(teamId ?? -1, practiceId ?? -1),
-    enabled: teamId !== null && practiceId !== null,
+    queryKey: keys.note(radarId ?? -1, practiceId ?? -1),
+    enabled: radarId !== null && practiceId !== null,
     queryFn: async () => {
-      const result = await api.GET('/api/teams/{team_id}/notes/{practice_id}', {
-        params: { path: { team_id: teamId!, practice_id: practiceId! } },
+      const result = await api.GET('/api/radars/{radar_id}/notes/{practice_id}', {
+        params: { path: { radar_id: radarId!, practice_id: practiceId! } },
       })
       if (result.response.status === 404) return null
       return unwrap(result)
@@ -129,7 +129,7 @@ export function useFrames(scope: string, step: Step) {
     queryKey: keys.frames(scope, step),
     placeholderData: keepPreviousData,
     queryFn: async () =>
-      unwrap(await api.GET('/api/radar/frames', { params: { query: { scope, step } } })),
+      unwrap(await api.GET('/api/frames', { params: { query: { scope, step } } })),
   })
 }
 
@@ -150,32 +150,34 @@ function useInvalidatingMutation<TVars, TData>(
   })
 }
 
-export function useCreateTeam() {
+export function useCreateRadar() {
   return useInvalidatingMutation(
-    async (body: TeamCreate) => unwrap(await api.POST('/api/teams', { body })),
-    () => [['teams']],
+    async (body: RadarCreate) => unwrap(await api.POST('/api/radars', { body })),
+    () => [['radars']],
   )
 }
 
-export function useUpdateTeam() {
+export function useUpdateRadar() {
   return useInvalidatingMutation(
-    async ({ id, body }: { id: number; body: TeamUpdate }) =>
-      unwrap(await api.PATCH('/api/teams/{team_id}', { params: { path: { team_id: id } }, body })),
-    ({ id }) => [['teams'], keys.team(id)],
+    async ({ id, body }: { id: number; body: RadarUpdate }) =>
+      unwrap(
+        await api.PATCH('/api/radars/{radar_id}', { params: { path: { radar_id: id } }, body }),
+      ),
+    ({ id }) => [['radars'], keys.radar(id)],
   )
 }
 
-export function useSetTeamArchived() {
+export function useSetRadarArchived() {
   return useInvalidatingMutation(
     async ({ id, archived }: { id: number; archived: boolean }) => {
-      const params = { params: { path: { team_id: id } } }
+      const params = { params: { path: { radar_id: id } } }
       return unwrap(
         archived
-          ? await api.POST('/api/teams/{team_id}/archive', params)
-          : await api.POST('/api/teams/{team_id}/restore', params),
+          ? await api.POST('/api/radars/{radar_id}/archive', params)
+          : await api.POST('/api/radars/{radar_id}/restore', params),
       )
     },
-    ({ id }) => [['teams'], keys.team(id), ['frames']],
+    ({ id }) => [['radars'], keys.radar(id), ['frames']],
   )
 }
 
@@ -222,14 +224,14 @@ export function usePlace() {
 
 export function usePutNote() {
   return useInvalidatingMutation(
-    async (v: { teamId: number; practiceId: number; version: number; body_md: string }) =>
+    async (v: { radarId: number; practiceId: number; version: number; body_md: string }) =>
       unwrap(
-        await api.PUT('/api/teams/{team_id}/notes/{practice_id}', {
-          params: { path: { team_id: v.teamId, practice_id: v.practiceId } },
+        await api.PUT('/api/radars/{radar_id}/notes/{practice_id}', {
+          params: { path: { radar_id: v.radarId, practice_id: v.practiceId } },
           body: { version: v.version, body_md: v.body_md },
         }),
       ),
-    (v) => [keys.note(v.teamId, v.practiceId), keys.practice(v.practiceId), ['revisions']],
+    (v) => [keys.note(v.radarId, v.practiceId), keys.practice(v.practiceId), ['revisions']],
   )
 }
 

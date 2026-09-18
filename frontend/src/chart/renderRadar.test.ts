@@ -9,7 +9,7 @@ const bubble = (
   adoption: number,
   value: number,
   extra: Partial<ChartBubble> = {},
-): ChartBubble => ({ practiceId, name, category, adoption, value, teams: 1, ...extra })
+): ChartBubble => ({ practiceId, name, category, adoption, value, radars: 1, ...extra })
 
 function setup(overrides: Partial<ChartState> = {}) {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
@@ -18,7 +18,7 @@ function setup(overrides: Partial<ChartState> = {}) {
   const radar = createRadar(svg, callbacks)
   const state: ChartState = {
     size: { width: 452, height: 252 },
-    scope: 'team',
+    scope: 'radar',
     bubbles: [bubble(10, 'Claude Code', 'tool', 70, 80), bubble(11, 'Spec-driven dev', 'practice', 20, 60)],
     dateLabel: 'Feb 2026',
     selected: [],
@@ -91,17 +91,17 @@ describe('renderRadar', () => {
     expect(callbacks.onNudge).toHaveBeenCalledTimes(1)
   })
 
-  it('fans out team positions for a selected org bubble and dims the rest', () => {
+  it('fans out radar positions for a selected org bubble and dims the rest', () => {
     const { svg, bubbleEl } = setup({
       scope: 'org',
       editable: false,
       selected: [10],
       bubbles: [
         bubble(10, 'Claude Code', 'tool', 60, 80, {
-          teams: 2,
-          teamPositions: [
-            { teamId: 1, teamName: 'Platform', adoption: 80, value: 90 },
-            { teamId: 2, teamName: 'Payments', adoption: 40, value: 70 },
+          radars: 2,
+          radarPositions: [
+            { radarId: 1, radarName: 'Platform', adoption: 80, value: 90 },
+            { radarId: 2, radarName: 'Payments', adoption: 40, value: 70 },
           ],
         }),
         bubble(11, 'Spec-driven dev', 'practice', 20, 60),

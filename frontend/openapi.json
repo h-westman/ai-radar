@@ -117,8 +117,8 @@
             "title": "Practice Id",
             "type": "integer"
           },
-          "team_id": {
-            "title": "Team Id",
+          "radar_id": {
+            "title": "Radar Id",
             "type": "integer"
           },
           "updated_at": {
@@ -132,7 +132,7 @@
           }
         },
         "required": [
-          "team_id",
+          "radar_id",
           "practice_id",
           "body_md",
           "version",
@@ -193,14 +193,14 @@
             "title": "Practice Id",
             "type": "integer"
           },
+          "radar_id": {
+            "title": "Radar Id",
+            "type": "integer"
+          },
           "removed": {
             "default": false,
             "title": "Removed",
             "type": "boolean"
-          },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
           },
           "value": {
             "anyOf": [
@@ -217,7 +217,7 @@
           }
         },
         "required": [
-          "team_id",
+          "radar_id",
           "practice_id"
         ],
         "title": "PlacementCreate",
@@ -253,6 +253,10 @@
             "title": "Practice Id",
             "type": "integer"
           },
+          "radar_id": {
+            "title": "Radar Id",
+            "type": "integer"
+          },
           "recorded_at": {
             "format": "date-time",
             "title": "Recorded At",
@@ -262,10 +266,6 @@
             "title": "Removed",
             "type": "boolean"
           },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
-          },
           "value": {
             "title": "Value",
             "type": "integer"
@@ -273,7 +273,7 @@
         },
         "required": [
           "id",
-          "team_id",
+          "radar_id",
           "practice_id",
           "adoption",
           "value",
@@ -295,11 +295,11 @@
             "title": "Practice Id",
             "type": "integer"
           },
-          "team_positions": {
+          "radar_positions": {
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/TeamPositionOut"
+                  "$ref": "#/components/schemas/RadarPositionOut"
                 },
                 "type": "array"
               },
@@ -307,10 +307,10 @@
                 "type": "null"
               }
             ],
-            "title": "Team Positions"
+            "title": "Radar Positions"
           },
-          "teams": {
-            "title": "Teams",
+          "radars": {
+            "title": "Radars",
             "type": "integer"
           },
           "value": {
@@ -322,7 +322,7 @@
           "practice_id",
           "adoption",
           "value",
-          "teams"
+          "radars"
         ],
         "title": "PointOut",
         "type": "object"
@@ -433,9 +433,12 @@
             "title": "Name",
             "type": "string"
           },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
+          "radars": {
+            "items": {
+              "$ref": "#/components/schemas/PracticeRadarUsage"
+            },
+            "title": "Radars",
+            "type": "array"
           },
           "summary": {
             "title": "Summary",
@@ -446,13 +449,6 @@
               "type": "string"
             },
             "title": "Tags",
-            "type": "array"
-          },
-          "teams": {
-            "items": {
-              "$ref": "#/components/schemas/PracticeTeamUsage"
-            },
-            "title": "Teams",
             "type": "array"
           },
           "updated_at": {
@@ -468,7 +464,6 @@
         "required": [
           "id",
           "name",
-          "slug",
           "category",
           "summary",
           "body_md",
@@ -478,7 +473,7 @@
           "created_at",
           "updated_at",
           "archived_at",
-          "teams"
+          "radars"
         ],
         "title": "PracticeDetail",
         "type": "object"
@@ -515,9 +510,10 @@
             "title": "Name",
             "type": "string"
           },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
+          "radars_count": {
+            "default": 0,
+            "title": "Radars Count",
+            "type": "integer"
           },
           "summary": {
             "title": "Summary",
@@ -529,17 +525,11 @@
             },
             "title": "Tags",
             "type": "array"
-          },
-          "teams_count": {
-            "default": 0,
-            "title": "Teams Count",
-            "type": "integer"
           }
         },
         "required": [
           "id",
           "name",
-          "slug",
           "category",
           "summary",
           "tags",
@@ -596,10 +586,6 @@
             "title": "Name",
             "type": "string"
           },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
           "summary": {
             "title": "Summary",
             "type": "string"
@@ -624,7 +610,6 @@
         "required": [
           "id",
           "name",
-          "slug",
           "category",
           "summary",
           "body_md",
@@ -636,6 +621,41 @@
           "archived_at"
         ],
         "title": "PracticeOut",
+        "type": "object"
+      },
+      "PracticeRadarUsage": {
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "note_md": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Md"
+          },
+          "radar_id": {
+            "title": "Radar Id",
+            "type": "integer"
+          },
+          "radar_name": {
+            "title": "Radar Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "radar_id",
+          "radar_name",
+          "label",
+          "note_md"
+        ],
+        "title": "PracticeRadarUsage",
         "type": "object"
       },
       "PracticeRef": {
@@ -660,46 +680,6 @@
           "category"
         ],
         "title": "PracticeRef",
-        "type": "object"
-      },
-      "PracticeTeamUsage": {
-        "properties": {
-          "label": {
-            "title": "Label",
-            "type": "string"
-          },
-          "note_md": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note Md"
-          },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
-          },
-          "team_name": {
-            "title": "Team Name",
-            "type": "string"
-          },
-          "team_slug": {
-            "title": "Team Slug",
-            "type": "string"
-          }
-        },
-        "required": [
-          "team_id",
-          "team_name",
-          "team_slug",
-          "label",
-          "note_md"
-        ],
-        "title": "PracticeTeamUsage",
         "type": "object"
       },
       "PracticeUpdate": {
@@ -801,6 +781,154 @@
         "title": "PracticeUpdate",
         "type": "object"
       },
+      "RadarCreate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RadarCreate",
+        "type": "object"
+      },
+      "RadarOut": {
+        "properties": {
+          "archived_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "version",
+          "created_at",
+          "updated_at",
+          "archived_at"
+        ],
+        "title": "RadarOut",
+        "type": "object"
+      },
+      "RadarPositionOut": {
+        "properties": {
+          "adoption": {
+            "title": "Adoption",
+            "type": "integer"
+          },
+          "radar_id": {
+            "title": "Radar Id",
+            "type": "integer"
+          },
+          "value": {
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "radar_id",
+          "adoption",
+          "value"
+        ],
+        "title": "RadarPositionOut",
+        "type": "object"
+      },
+      "RadarUpdate": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "version": {
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "title": "RadarUpdate",
+        "type": "object"
+      },
       "RevertOut": {
         "properties": {
           "entity": {
@@ -810,9 +938,9 @@
           },
           "entity_type": {
             "enum": [
-              "team",
+              "radar",
               "practice",
-              "team_note"
+              "radar_note"
             ],
             "title": "Entity Type",
             "type": "string"
@@ -853,9 +981,9 @@
           },
           "entity_type": {
             "enum": [
-              "team",
+              "radar",
               "practice",
-              "team_note"
+              "radar_note"
             ],
             "title": "Entity Type",
             "type": "string"
@@ -880,159 +1008,6 @@
           "created_at"
         ],
         "title": "RevisionOut",
-        "type": "object"
-      },
-      "TeamCreate": {
-        "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "maxLength": 2000,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "name": {
-            "maxLength": 100,
-            "minLength": 1,
-            "title": "Name",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "title": "TeamCreate",
-        "type": "object"
-      },
-      "TeamOut": {
-        "properties": {
-          "archived_at": {
-            "anyOf": [
-              {
-                "format": "date-time",
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Archived At"
-          },
-          "created_at": {
-            "format": "date-time",
-            "title": "Created At",
-            "type": "string"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "id": {
-            "title": "Id",
-            "type": "integer"
-          },
-          "name": {
-            "title": "Name",
-            "type": "string"
-          },
-          "slug": {
-            "title": "Slug",
-            "type": "string"
-          },
-          "updated_at": {
-            "format": "date-time",
-            "title": "Updated At",
-            "type": "string"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "id",
-          "name",
-          "slug",
-          "description",
-          "version",
-          "created_at",
-          "updated_at",
-          "archived_at"
-        ],
-        "title": "TeamOut",
-        "type": "object"
-      },
-      "TeamPositionOut": {
-        "properties": {
-          "adoption": {
-            "title": "Adoption",
-            "type": "integer"
-          },
-          "team_id": {
-            "title": "Team Id",
-            "type": "integer"
-          },
-          "value": {
-            "title": "Value",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "team_id",
-          "adoption",
-          "value"
-        ],
-        "title": "TeamPositionOut",
-        "type": "object"
-      },
-      "TeamUpdate": {
-        "properties": {
-          "description": {
-            "anyOf": [
-              {
-                "maxLength": 2000,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "name": {
-            "anyOf": [
-              {
-                "maxLength": 100,
-                "minLength": 1,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Name"
-          },
-          "version": {
-            "title": "Version",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "version"
-        ],
-        "title": "TeamUpdate",
         "type": "object"
       },
       "ValidationError": {
@@ -1083,6 +1058,97 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/frames": {
+      "get": {
+        "operationId": "get_frames_api_frames_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "default": "org",
+              "title": "Scope",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "step",
+            "required": false,
+            "schema": {
+              "default": "month",
+              "enum": [
+                "week",
+                "month"
+              ],
+              "title": "Step",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FramesOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Frames",
+        "tags": [
+          "frames"
+        ]
+      }
+    },
     "/api/health": {
       "get": {
         "operationId": "health_api_health_get",
@@ -1597,66 +1663,18 @@
         ]
       }
     },
-    "/api/radar/frames": {
+    "/api/radars": {
       "get": {
-        "operationId": "get_frames_api_radar_frames_get",
+        "operationId": "list_radars_api_radars_get",
         "parameters": [
           {
             "in": "query",
-            "name": "scope",
+            "name": "include_archived",
             "required": false,
             "schema": {
-              "default": "org",
-              "title": "Scope",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "step",
-            "required": false,
-            "schema": {
-              "default": "month",
-              "enum": [
-                "week",
-                "month"
-              ],
-              "title": "Step",
-              "type": "string"
-            }
-          },
-          {
-            "in": "query",
-            "name": "from",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "format": "date-time",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "From"
-            }
-          },
-          {
-            "in": "query",
-            "name": "to",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "format": "date-time",
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "To"
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
             }
           }
         ],
@@ -1665,7 +1683,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/FramesOut"
+                  "items": {
+                    "$ref": "#/components/schemas/RadarOut"
+                  },
+                  "title": "Response List Radars Api Radars Get",
+                  "type": "array"
                 }
               }
             },
@@ -1682,9 +1704,416 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Frames",
+        "summary": "List Radars",
         "tags": [
-          "radar"
+          "radars"
+        ]
+      },
+      "post": {
+        "operationId": "create_radar_api_radars_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "x-edited-by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Edited-By"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadarCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Radar",
+        "tags": [
+          "radars"
+        ]
+      }
+    },
+    "/api/radars/{radar_id}": {
+      "get": {
+        "operationId": "get_radar_api_radars__radar_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Radar",
+        "tags": [
+          "radars"
+        ]
+      },
+      "patch": {
+        "operationId": "update_radar_api_radars__radar_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-edited-by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Edited-By"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadarUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Radar",
+        "tags": [
+          "radars"
+        ]
+      }
+    },
+    "/api/radars/{radar_id}/archive": {
+      "post": {
+        "operationId": "archive_radar_api_radars__radar_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-edited-by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Edited-By"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Radar",
+        "tags": [
+          "radars"
+        ]
+      }
+    },
+    "/api/radars/{radar_id}/notes/{practice_id}": {
+      "get": {
+        "operationId": "get_note_api_radars__radar_id__notes__practice_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "practice_id",
+            "required": true,
+            "schema": {
+              "title": "Practice Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Note",
+        "tags": [
+          "notes"
+        ]
+      },
+      "put": {
+        "operationId": "put_note_api_radars__radar_id__notes__practice_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "practice_id",
+            "required": true,
+            "schema": {
+              "title": "Practice Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-edited-by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Edited-By"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotePut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Put Note",
+        "tags": [
+          "notes"
+        ]
+      }
+    },
+    "/api/radars/{radar_id}/restore": {
+      "post": {
+        "operationId": "restore_radar_api_radars__radar_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "radar_id",
+            "required": true,
+            "schema": {
+              "title": "Radar Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-edited-by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Edited-By"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadarOut"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Radar",
+        "tags": [
+          "radars"
         ]
       }
     },
@@ -1698,9 +2127,9 @@
             "required": true,
             "schema": {
               "enum": [
-                "team",
+                "radar",
                 "practice",
-                "team_note"
+                "radar_note"
               ],
               "title": "Entity Type",
               "type": "string"
@@ -1803,460 +2232,6 @@
         "summary": "Revert",
         "tags": [
           "revisions"
-        ]
-      }
-    },
-    "/api/teams": {
-      "get": {
-        "operationId": "list_teams_api_teams_get",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "include_archived",
-            "required": false,
-            "schema": {
-              "default": false,
-              "title": "Include Archived",
-              "type": "boolean"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/TeamOut"
-                  },
-                  "title": "Response List Teams Api Teams Get",
-                  "type": "array"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "List Teams",
-        "tags": [
-          "teams"
-        ]
-      },
-      "post": {
-        "operationId": "create_team_api_teams_post",
-        "parameters": [
-          {
-            "in": "header",
-            "name": "x-edited-by",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Edited-By"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TeamCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Create Team",
-        "tags": [
-          "teams"
-        ]
-      }
-    },
-    "/api/teams/{team_id}": {
-      "get": {
-        "operationId": "get_team_api_teams__team_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Get Team",
-        "tags": [
-          "teams"
-        ]
-      },
-      "patch": {
-        "operationId": "update_team_api_teams__team_id__patch",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-edited-by",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Edited-By"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TeamUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Update Team",
-        "tags": [
-          "teams"
-        ]
-      }
-    },
-    "/api/teams/{team_id}/archive": {
-      "post": {
-        "operationId": "archive_team_api_teams__team_id__archive_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-edited-by",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Edited-By"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Archive Team",
-        "tags": [
-          "teams"
-        ]
-      }
-    },
-    "/api/teams/{team_id}/notes/{practice_id}": {
-      "get": {
-        "operationId": "get_note_api_teams__team_id__notes__practice_id__get",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "practice_id",
-            "required": true,
-            "schema": {
-              "title": "Practice Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Get Note",
-        "tags": [
-          "notes"
-        ]
-      },
-      "put": {
-        "operationId": "put_note_api_teams__team_id__notes__practice_id__put",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "path",
-            "name": "practice_id",
-            "required": true,
-            "schema": {
-              "title": "Practice Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-edited-by",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Edited-By"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NotePut"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/NoteOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Put Note",
-        "tags": [
-          "notes"
-        ]
-      }
-    },
-    "/api/teams/{team_id}/restore": {
-      "post": {
-        "operationId": "restore_team_api_teams__team_id__restore_post",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "team_id",
-            "required": true,
-            "schema": {
-              "title": "Team Id",
-              "type": "integer"
-            }
-          },
-          {
-            "in": "header",
-            "name": "x-edited-by",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Edited-By"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TeamOut"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Restore Team",
-        "tags": [
-          "teams"
         ]
       }
     }

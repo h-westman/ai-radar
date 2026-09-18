@@ -2,14 +2,12 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { conflictCurrent, isConflict, validationMessage } from '../api/client'
 import { useCreatePractice, useSetPracticeArchived, useSimilar } from '../api/hooks'
-import { CATEGORIES, type Category, type Practice } from '../api/types'
+import { type Category, type Practice } from '../api/types'
+import CategoryRadios from '../components/CategoryRadios'
 import { useNamePrompt } from '../components/NamePrompt'
 import { useToast } from '../components/Toasts'
-import { toRef } from '../lib/refs'
 import { useDebounced } from '../lib/useDebounced'
 import styles from './Pages.module.css'
-
-const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1)
 
 export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) {
   const navigate = useNavigate()
@@ -23,7 +21,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
   const create = useCreatePractice()
   const setArchived = useSetPracticeArchived()
 
-  const open = (p: { id: number; slug: string }) => navigate(`/practices/${toRef(p.id, p.slug)}`)
+  const open = (p: { id: number }) => navigate(`/practices/${p.id}`)
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault()
@@ -70,23 +68,14 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
           <ul>
             {similar.map((p) => (
               <li key={p.id}>
-                <Link to={`/practices/${toRef(p.id, p.slug)}`}>{p.name}</Link>
+                <Link to={`/practices/${p.id}`}>{p.name}</Link>
                 {p.archived_at && <span className={styles.badge}>Archived</span>}
               </li>
             ))}
           </ul>
         </div>
       )}
-      <label>
-        Category
-        <select value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {capitalize(c)}
-            </option>
-          ))}
-        </select>
-      </label>
+      <CategoryRadios value={category} onChange={setCategory} />
       <label>
         Summary
         <input value={summary} maxLength={280} onChange={(e) => setSummary(e.target.value)} />
@@ -99,7 +88,7 @@ export default function NewPracticeForm({ onCancel }: { onCancel: () => void }) 
               Restore it
             </button>
           ) : (
-            <Link to={`/practices/${toRef(conflict.id, conflict.slug)}`}>Open it</Link>
+            <Link to={`/practices/${conflict.id}`}>Open it</Link>
           )}
         </p>
       )}

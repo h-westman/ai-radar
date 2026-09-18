@@ -3,21 +3,20 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.clock import utcnow
-from app.models import Placement, Practice, Team
-from app.services.slugs import slugify
+from app.models import Placement, Practice, Radar
 
 
-def make_team(session: Session, name: str = "Platform", **fields) -> Team:
-    team = Team(name=name, slug=slugify(name), **fields)
-    session.add(team)
+def make_radar(session: Session, name: str = "Platform", **fields) -> Radar:
+    radar = Radar(name=name, **fields)
+    session.add(radar)
     session.flush()
-    return team
+    return radar
 
 
 def make_practice(
     session: Session, name: str = "Claude Code", category: str = "tool", **fields
 ) -> Practice:
-    practice = Practice(name=name, slug=slugify(name), category=category, **fields)
+    practice = Practice(name=name, category=category, **fields)
     session.add(practice)
     session.flush()
     return practice
@@ -25,7 +24,7 @@ def make_practice(
 
 def make_placement(
     session: Session,
-    team: Team,
+    radar: Radar,
     practice: Practice,
     *,
     adoption: int = 50,
@@ -36,7 +35,7 @@ def make_placement(
 ) -> Placement:
     now = utcnow()
     placement = Placement(
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         adoption=adoption,
         value=value,

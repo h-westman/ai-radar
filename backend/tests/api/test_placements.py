@@ -3,12 +3,12 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.clock import utcnow
-from tests.factories import make_placement, make_practice, make_team
+from tests.factories import make_placement, make_practice, make_radar
 
 
 @pytest.fixture
-def team(session):
-    return make_team(session)
+def radar(session):
+    return make_radar(session)
 
 
 @pytest.fixture
@@ -20,9 +20,9 @@ def post(client, headers=None, **body):
     return client.post("/api/placements", json=body, headers=headers or {})
 
 
-def test_place_defaults_to_now(client, team, practice):
+def test_place_defaults_to_now(client, radar, practice):
     before = utcnow()
-    response = post(client, team_id=team.id, practice_id=practice.id, adoption=70, value=80)
+    response = post(client, radar_id=radar.id, practice_id=practice.id, adoption=70, value=80)
     assert response.status_code == 201
     body = response.json()
     assert (body["adoption"], body["value"], body["removed"]) == (70, 80, False)
@@ -30,11 +30,11 @@ def test_place_defaults_to_now(client, team, practice):
     assert datetime.fromisoformat(body["recorded_at"]) >= before
 
 
-def test_records_edited_by(client, team, practice):
+def test_records_edited_by(client, radar, practice):
     body = post(
         client,
         headers={"X-Edited-By": "Kim"},
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         adoption=1,
         value=1,
@@ -42,11 +42,11 @@ def test_records_edited_by(client, team, practice):
     assert body["edited_by"] == "Kim"
 
 
-def test_backdated_placement(client, team, practice):
+def test_backdated_placement(client, radar, practice):
     month_ago = utcnow() - timedelta(days=30)
     body = post(
         client,
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         adoption=10,
         value=20,
@@ -56,11 +56,11 @@ def test_backdated_placement(client, team, practice):
     assert datetime.fromisoformat(body["recorded_at"]) > month_ago
 
 
-def test_future_effective_at_is_rejected(client, team, practice):
+def test_future_effective_at_is_rejected(client, radar, practice):
     tomorrow = (utcnow() + timedelta(days=1)).isoformat()
     response = post(
         client,
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         adoption=1,
         value=1,
@@ -69,10 +69,10 @@ def test_future_effective_at_is_rejected(client, team, practice):
     assert response.status_code == 422
 
 
-def test_naive_effective_at_is_rejected(client, team, practice):
+def test_naive_effective_at_is_rejected(client, radar, practice):
     response = post(
         client,
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         adoption=1,
         value=1,
@@ -90,35 +90,35 @@ def test_naive_effective_at_is_rejected(client, team, practice):
         {"adoption": -1, "value": 5},
     ],
 )
-def test_position_is_required_and_bounded(client, team, practice, position):
-    response = post(client, team_id=team.id, practice_id=practice.id, **position)
+def test_position_is_required_and_bounded(client, radar, practice, position):
+    response = post(client, radar_id=radar.id, practice_id=practice.id, **position)
     assert response.status_code == 422
 
 
-def test_remove_copies_current_position(client, session, team, practice):
+def test_remove_copies_current_position(client, session, radar, practice):
     make_placement(
         session,
-        team,
+        radar,
         practice,
         adoption=60,
         value=40,
         effective_at=utcnow() - timedelta(hours=1),
     )
-    body = post(client, team_id=team.id, practice_id=practice.id, removed=True).json()
+    body = post(client, radar_id=radar.id, practice_id=practice.id, removed=True).json()
     assert (body["adoption"], body["value"], body["removed"]) == (60, 40, True)
 
 
-def test_backdated_remove_copies_position_as_of_that_date(client, session, team, practice):
+def test_backdated_remove_copies_position_as_of_that_date(client, session, radar, practice):
     now = utcnow()
     make_placement(
-        session, team, practice, adoption=20, value=20, effective_at=now - timedelta(days=10)
+        session, radar, practice, adoption=20, value=20, effective_at=now - timedelta(days=10)
     )
     make_placement(
-        session, team, practice, adoption=80, value=80, effective_at=now - timedelta(days=1)
+        session, radar, practice, adoption=80, value=80, effective_at=now - timedelta(days=1)
     )
     body = post(
         client,
-        team_id=team.id,
+        radar_id=radar.id,
         practice_id=practice.id,
         removed=True,
         effective_at=(now - timedelta(days=5)).isoformat(),
@@ -126,24 +126,26 @@ def test_backdated_remove_copies_position_as_of_that_date(client, session, team,
     assert (body["adoption"], body["value"]) == (20, 20)
 
 
-def test_remove_when_not_on_radar_is_rejected(client, session, team, practice):
-    assert post(client, team_id=team.id, practice_id=practice.id, removed=True).status_code == 422
+def test_remove_when_not_on_radar_is_rejected(client, session, radar, practice):
+    assert post(client, radar_id=radar.id, practice_id=practice.id, removed=True).status_code == 422
     make_placement(
-        session, team, practice, removed=True, effective_at=utcnow() - timedelta(hours=1)
+        session, radar, practice, removed=True, effective_at=utcnow() - timedelta(hours=1)
     )
-    assert post(client, team_id=team.id, practice_id=practice.id, removed=True).status_code == 422
+    assert post(client, radar_id=radar.id, practice_id=practice.id, removed=True).status_code == 422
 
 
-def test_unknown_team_or_practice_is_404(client, team, practice):
+def test_unknown_radar_or_practice_is_404(client, radar, practice):
     assert (
-        post(client, team_id=999999, practice_id=practice.id, adoption=1, value=1).status_code
+        post(client, radar_id=999999, practice_id=practice.id, adoption=1, value=1).status_code
         == 404
     )
-    assert post(client, team_id=team.id, practice_id=999999, adoption=1, value=1).status_code == 404
+    assert (
+        post(client, radar_id=radar.id, practice_id=999999, adoption=1, value=1).status_code == 404
+    )
 
 
-def test_archived_practice_is_rejected(client, session, team, practice):
+def test_archived_practice_is_rejected(client, session, radar, practice):
     practice.archived_at = utcnow()
     session.flush()
-    response = post(client, team_id=team.id, practice_id=practice.id, adoption=1, value=1)
+    response = post(client, radar_id=radar.id, practice_id=practice.id, adoption=1, value=1)
     assert response.status_code == 422

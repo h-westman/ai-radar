@@ -18,9 +18,9 @@ async def conflict_handler(_request: Request, exc: ConflictError) -> JSONRespons
 
 
 _UNIQUE_VIOLATION_MESSAGES = {
-    "uq_teams_name_lower": "A team with that name already exists",
+    "uq_radars_name_lower": "A radar with that name already exists",
     "uq_practices_name_lower": "A practice with that name already exists",
-    "team_notes_pkey": "This note was changed by someone else",
+    "radar_notes_pkey": "This note was changed by someone else",
 }
 
 

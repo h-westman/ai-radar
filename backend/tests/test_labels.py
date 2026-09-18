@@ -1,7 +1,6 @@
 import pytest
 
 from app.services.labels import corner_label
-from app.services.slugs import slugify
 
 
 @pytest.mark.parametrize(
@@ -19,17 +18,3 @@ from app.services.slugs import slugify
 )
 def test_corner_label(adoption, value, expected):
     assert corner_label(adoption, value) == expected
-
-
-@pytest.mark.parametrize(
-    ("name", "expected"),
-    [
-        ("GitHub Copilot", "github-copilot"),
-        ("  Spec-driven dev! ", "spec-driven-dev"),
-        ("Årsplan för AI", "arsplan-for-ai"),
-        ("!!!", "item"),
-        ("a" * 200, "a" * 120),
-    ],
-)
-def test_slugify(name, expected):
-    assert slugify(name) == expected

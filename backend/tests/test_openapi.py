@@ -2,11 +2,11 @@ from app.main import create_app
 
 EXPECTED_PATHS = {
     "/api/health",
-    "/api/teams",
-    "/api/teams/{team_id}",
-    "/api/teams/{team_id}/archive",
-    "/api/teams/{team_id}/restore",
-    "/api/teams/{team_id}/notes/{practice_id}",
+    "/api/radars",
+    "/api/radars/{radar_id}",
+    "/api/radars/{radar_id}/archive",
+    "/api/radars/{radar_id}/restore",
+    "/api/radars/{radar_id}/notes/{practice_id}",
     "/api/practices",
     "/api/practices/similar",
     "/api/practices/{practice_id}",
@@ -15,7 +15,7 @@ EXPECTED_PATHS = {
     "/api/placements",
     "/api/revisions",
     "/api/revisions/{revision_id}/revert",
-    "/api/radar/frames",
+    "/api/frames",
 }
 
 

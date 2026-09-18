@@ -1,4 +1,4 @@
-from tests.factories import make_practice, make_team
+from tests.factories import make_practice, make_radar
 
 
 def history(client, entity_type, entity_id):
@@ -43,20 +43,20 @@ def test_revert_practice(client):
     assert (latest["action"], latest["edited_by"]) == ("revert", "Kim")
 
 
-def test_revert_team_restores_name_and_slug(client):
-    team = client.post("/api/teams", json={"name": "Platform"}).json()
-    client.patch(f"/api/teams/{team['id']}", json={"version": 1, "name": "Core"})
-    first = history(client, "team", team["id"])[-1]
+def test_revert_radar_restores_name(client):
+    radar = client.post("/api/radars", json={"name": "Platform"}).json()
+    client.patch(f"/api/radars/{radar['id']}", json={"version": 1, "name": "Core"})
+    first = history(client, "radar", radar["id"])[-1]
     body = client.post(f"/api/revisions/{first['id']}/revert").json()
-    assert (body["entity"]["name"], body["entity"]["slug"]) == ("Platform", "platform")
+    assert body["entity"]["name"] == "Platform"
 
 
 def test_revert_note(client, session):
-    team_id, practice_id = make_team(session).id, make_practice(session).id
-    note_url = f"/api/teams/{team_id}/notes/{practice_id}"
+    radar_id, practice_id = make_radar(session).id, make_practice(session).id
+    note_url = f"/api/radars/{radar_id}/notes/{practice_id}"
     client.put(note_url, json={"version": 0, "body_md": "first"})
     client.put(note_url, json={"version": 1, "body_md": "second"})
-    first = history(client, "team_note", f"{team_id}:{practice_id}")[-1]
+    first = history(client, "radar_note", f"{radar_id}:{practice_id}")[-1]
     body = client.post(f"/api/revisions/{first['id']}/revert").json()
     assert (body["entity"]["body_md"], body["entity"]["version"]) == ("first", 3)
 

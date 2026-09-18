@@ -1,18 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
-import { useFrames, usePlace, usePractices, useTeams } from '../api/hooks'
+import { useFrames, usePlace, usePractices, useRadars } from '../api/hooks'
 import { CATEGORIES, type Category, type PlacementCreate, type Point, type Step } from '../api/types'
 import { formatFrameDate, offRadar, trail } from '../chart/frames'
 import { positionLabel } from '../chart/geometry'
 import RadarChart from '../chart/RadarChart'
 import type { ChartBubble } from '../chart/renderRadar'
-import { LAST_TEAM_KEY } from '../components/AppShell'
+import { LAST_RADAR_KEY } from '../components/AppShell'
 import Drawer from '../components/Drawer'
 import { useNamePrompt } from '../components/NamePrompt'
 import Timeline, { FRAME_MS } from '../components/Timeline'
 import { useToast } from '../components/Toasts'
 import Tray from '../components/Tray'
-import { idFromRef } from '../lib/refs'
+import { categoryLabel } from '../lib/categories'
+import { parseId } from '../lib/ids'
 import { writeString } from '../lib/storage'
 import styles from './RadarPage.module.css'
 
@@ -27,14 +28,14 @@ function prefersReducedMotion() {
 }
 
 export default function RadarPage() {
-  const { teamRef } = useParams()
-  const teamId = idFromRef(teamRef)
-  const scope = teamId === null ? 'org' : 'team'
-  const scopeKey = teamId === null ? 'org' : `team:${teamId}`
+  const { radarId: radarRef } = useParams()
+  const radarId = parseId(radarRef)
+  const scope = radarId === null ? 'org' : 'radar'
+  const scopeKey = radarId === null ? 'org' : `radar:${radarId}`
 
   const [step, setStep] = useState<Step>('month')
   const { data: framesData, isLoading } = useFrames(scopeKey, step)
-  const { data: teams = [] } = useTeams(true)
+  const { data: radars = [] } = useRadars(true)
   const { data: practices = [] } = usePractices()
   const place = usePlace()
   const toast = useToast()
@@ -54,10 +55,10 @@ export default function RadarPage() {
   const currentIndex = Math.min(index ?? lastIndex, lastIndex)
   const isLatest = currentIndex === lastIndex
   const frame = frames[currentIndex]
-  const team = teams.find((t) => t.id === teamId)
-  const teamWritable = scope === 'team' && !!team && team.archived_at === null
-  const editable = teamWritable && !playing && (isLatest || unlocked)
-  const editingPast = teamWritable && unlocked && !isLatest
+  const radar = radars.find((r) => r.id === radarId)
+  const radarWritable = scope === 'radar' && !!radar && radar.archived_at === null
+  const editable = radarWritable && !playing && (isLatest || unlocked)
+  const editingPast = radarWritable && unlocked && !isLatest
 
   useEffect(() => {
     setIndex(null)
@@ -70,14 +71,14 @@ export default function RadarPage() {
     if (isLatest) setUnlocked(false)
   }, [isLatest])
   useEffect(() => {
-    if (teamRef) writeString(LAST_TEAM_KEY, teamRef)
-  }, [teamRef])
+    if (radarId !== null) writeString(LAST_RADAR_KEY, String(radarId))
+  }, [radarId])
   useEffect(() => {
     const timers = nudgeTimers.current
     return () => timers.forEach((t) => window.clearTimeout(t))
   }, [])
 
-  const teamName = useMemo(() => new Map(teams.map((t) => [t.id, t.name])), [teams])
+  const radarName = useMemo(() => new Map(radars.map((r) => [r.id, r.name])), [radars])
   const practiceById = useMemo(() => new Map(practices.map((p) => [p.id, p])), [practices])
   const nameOf = (id: number) =>
     framesData?.practices[String(id)]?.name ?? practiceById.get(id)?.name ?? 'Unknown practice'
@@ -89,7 +90,7 @@ export default function RadarPage() {
     const byId = new Map((frame?.points ?? []).map((p) => [p.practice_id, p]))
     for (const [id, override] of overrides) {
       if (override === 'removed') byId.delete(id)
-      else byId.set(id, { ...(byId.get(id) ?? { practice_id: id, teams: 1 }), ...override })
+      else byId.set(id, { ...(byId.get(id) ?? { practice_id: id, radars: 1 }), ...override })
     }
     return [...byId.values()]
   }, [frame, overrides])
@@ -104,16 +105,16 @@ export default function RadarPage() {
           category: categoryOf(p.practice_id),
           adoption: p.adoption,
           value: p.value,
-          teams: p.teams,
-          teamPositions: p.team_positions?.map((t) => ({
-            teamId: t.team_id,
-            teamName: teamName.get(t.team_id) ?? `Team ${t.team_id}`,
-            adoption: t.adoption,
-            value: t.value,
+          radars: p.radars,
+          radarPositions: p.radar_positions?.map((r) => ({
+            radarId: r.radar_id,
+            radarName: radarName.get(r.radar_id) ?? `Radar ${r.radar_id}`,
+            adoption: r.adoption,
+            value: r.value,
           })),
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [points, category, framesData, practiceById, teamName],
+    [points, category, framesData, practiceById, radarName],
   )
 
   const trails = useMemo(
@@ -137,14 +138,14 @@ export default function RadarPage() {
   )
 
   async function save(practiceId: number, next: Override, previous?: Position) {
-    if (teamId === null) return
+    if (radarId === null) return
     await ensureName()
     setOverrides((m) => new Map(m).set(practiceId, next))
     const effective_at = editingPast && frame ? frame.date : undefined
     const body: PlacementCreate =
       next === 'removed'
-        ? { team_id: teamId, practice_id: practiceId, removed: true, effective_at }
-        : { team_id: teamId, practice_id: practiceId, ...next, effective_at }
+        ? { radar_id: radarId, practice_id: practiceId, removed: true, effective_at }
+        : { radar_id: radarId, practice_id: practiceId, ...next, effective_at }
     try {
       await place.mutateAsync(body)
       if (next === 'removed') {
@@ -181,28 +182,28 @@ export default function RadarPage() {
     setSelected((s) => (additive ? (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]) : [id]))
   }
 
-  if (teamId !== null && teams.length > 0 && !team) {
+  if (radarId !== null && radars.length > 0 && !radar) {
     return (
       <div className={styles.message}>
-        This team doesn’t exist. <Link to="/teams">See all teams</Link>
+        This radar doesn’t exist. <Link to="/radars">See all radars</Link>
       </div>
     )
   }
 
-  const title = scope === 'org' ? 'Whole organization' : (team?.name ?? '')
+  const title = scope === 'org' ? 'Whole organization' : (radar?.name ?? '')
   const focusId = selected[selected.length - 1]
   const focus = points.find((p) => p.practice_id === focusId)
   const focusListItem = focus ? practiceById.get(focus.practice_id) : undefined
 
   return (
     <div className={styles.layout}>
-      {scope === 'team' && (
+      {scope === 'radar' && (
         <Tray practices={trayPractices} editable={editable} onPlace={(id) => void save(id, CENTER)} />
       )}
       <section className={styles.center} aria-label={`${title} radar`}>
         <div className={styles.toolbar}>
           <h1>{title}</h1>
-          {team?.archived_at && <span className={styles.archived}>Archived: read-only</span>}
+          {radar?.archived_at && <span className={styles.archived}>Archived: read-only</span>}
           <select
             aria-label="Filter by category"
             value={category}
@@ -211,7 +212,7 @@ export default function RadarPage() {
             <option value="">All categories</option>
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
-                {c[0].toUpperCase() + c.slice(1)}
+                {categoryLabel(c)}
               </option>
             ))}
           </select>
@@ -247,9 +248,9 @@ export default function RadarPage() {
           />
           {!isLoading && points.length === 0 && (
             <p className={styles.empty}>
-              {scope === 'team'
+              {scope === 'radar'
                 ? 'Drag practices from the tray onto the chart to start this radar.'
-                : 'No team has placed anything yet.'}
+                : 'Nobody has placed anything yet.'}
             </p>
           )}
         </div>
@@ -258,7 +259,7 @@ export default function RadarPage() {
           index={currentIndex}
           step={step}
           playing={playing}
-          canEdit={teamWritable}
+          canEdit={radarWritable}
           unlocked={unlocked}
           onIndexChange={(i) => setIndex(i >= lastIndex ? null : i)}
           onPlayingChange={setPlaying}
@@ -275,16 +276,15 @@ export default function RadarPage() {
           practice={{
             id: focus.practice_id,
             name: nameOf(focus.practice_id),
-            slug: focusListItem?.slug ?? '',
             category: categoryOf(focus.practice_id),
             summary: focusListItem?.summary ?? '',
           }}
           label={positionLabel(focus.adoption, focus.value)}
-          teamId={teamId ?? undefined}
-          teams={focus.team_positions?.map((t) => ({
-            teamId: t.team_id,
-            teamName: teamName.get(t.team_id) ?? `Team ${t.team_id}`,
-            label: positionLabel(t.adoption, t.value),
+          radarId={radarId ?? undefined}
+          radars={focus.radar_positions?.map((r) => ({
+            radarId: r.radar_id,
+            radarName: radarName.get(r.radar_id) ?? `Radar ${r.radar_id}`,
+            label: positionLabel(r.adoption, r.value),
           }))}
           canRemove={editable}
           onRemove={() => removeWithUndo(focus.practice_id)}

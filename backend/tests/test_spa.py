@@ -24,7 +24,7 @@ def static_dir(tmp_path):
 def test_serves_index_for_root_and_client_routes(session, static_dir):
     client = make_client(session, static_dir)
     assert client.get("/").text == "<div id=root></div>"
-    assert client.get("/radar/team/3-platform").text == "<div id=root></div>"
+    assert client.get("/radar/3").text == "<div id=root></div>"
 
 
 def test_serves_static_files(session, static_dir):

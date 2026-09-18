@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { FramesResponse } from '../api/types'
-import { LAST_TEAM_KEY } from '../components/AppShell'
+import { LAST_RADAR_KEY } from '../components/AppShell'
 import { setEditedBy } from '../lib/editedBy'
-import { framesResponse, listItem, team } from '../test/fixtures'
+import { framesResponse, listItem, radar } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
 
@@ -17,18 +17,18 @@ beforeEach(() => {
   posted = []
   frames = framesResponse()
   server.use(
-    http.get('/api/teams', () =>
-      HttpResponse.json([team(), team({ id: 2, name: 'Payments', slug: 'payments' })]),
+    http.get('/api/radars', () =>
+      HttpResponse.json([radar(), radar({ id: 2, name: 'Payments' })]),
     ),
     http.get('/api/practices', () =>
       HttpResponse.json([
         listItem(),
-        listItem({ id: 11, name: 'Spec-driven dev', slug: 'spec-driven-dev', category: 'practice' }),
-        listItem({ id: 12, name: 'Prompt library', slug: 'prompt-library', category: 'workflow' }),
+        listItem({ id: 11, name: 'Spec-driven dev', category: 'practice' }),
+        listItem({ id: 12, name: 'Prompt library', category: 'workflow' }),
       ]),
     ),
-    http.get('/api/radar/frames', () => HttpResponse.json(frames)),
-    http.get('/api/teams/:teamId/notes/:practiceId', () =>
+    http.get('/api/frames', () => HttpResponse.json(frames)),
+    http.get('/api/radars/:radarId/notes/:practiceId', () =>
       HttpResponse.json({ detail: 'Note not found' }, { status: 404 }),
     ),
     http.post('/api/placements', async ({ request }) => {
@@ -40,51 +40,51 @@ beforeEach(() => {
 
 const bubble = (label: string) => document.querySelector<SVGGElement>(`[aria-label="${label}"]`)
 
-async function openTeamRadar() {
-  const view = renderRoutes('/radar/team/1-platform')
+async function openRadar() {
+  const view = renderRoutes('/radar/1')
   await waitFor(() => expect(bubble('Claude Code, Core')).not.toBeNull())
   return view
 }
 
-describe('RadarPage (team scope)', () => {
+describe('RadarPage (radar scope)', () => {
   it('shows the latest frame, and the tray lists practices not on the radar', async () => {
-    await openTeamRadar()
+    await openRadar()
     expect(bubble('Spec-driven dev, Hidden gem')).not.toBeNull()
     const tray = screen.getByRole('region', { name: 'Not on radar' })
     expect(within(tray).getByText('Prompt library')).toBeInTheDocument()
     expect(within(tray).queryByText('Claude Code')).not.toBeInTheDocument()
-    expect(localStorage.getItem(LAST_TEAM_KEY)).toBe('1-platform')
+    expect(localStorage.getItem(LAST_RADAR_KEY)).toBe('1')
   })
 
   it('places a practice from the tray at the centre', async () => {
-    await openTeamRadar()
+    await openRadar()
     await userEvent.click(screen.getByRole('button', { name: 'Place Prompt library' }))
     await waitFor(() =>
-      expect(posted).toEqual([{ team_id: 1, practice_id: 12, adoption: 50, value: 50 }]),
+      expect(posted).toEqual([{ radar_id: 1, practice_id: 12, adoption: 50, value: 50 }]),
     )
   })
 
   it('opens the drawer, removes with undo', async () => {
-    await openTeamRadar()
+    await openRadar()
     fireEvent.click(bubble('Claude Code, Core')!)
     expect(await screen.findByRole('complementary', { name: 'Details for Claude Code' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Remove from radar' }))
-    await waitFor(() => expect(posted[0]).toEqual({ team_id: 1, practice_id: 10, removed: true }))
+    await waitFor(() => expect(posted[0]).toEqual({ radar_id: 1, practice_id: 10, removed: true }))
     await userEvent.click(await screen.findByRole('button', { name: 'Undo' }))
     await waitFor(() =>
-      expect(posted[1]).toEqual({ team_id: 1, practice_id: 10, adoption: 75, value: 85 }),
+      expect(posted[1]).toEqual({ radar_id: 1, practice_id: 10, adoption: 75, value: 85 }),
     )
   })
 
   it('backdates changes when editing a past frame', async () => {
-    await openTeamRadar()
+    await openRadar()
     fireEvent.change(screen.getByRole('slider', { name: 'Timeline' }), { target: { value: '0' } })
     await userEvent.click(screen.getByRole('button', { name: 'Edit here' }))
     expect(document.querySelector('svg.radar')?.classList.contains('editing-past')).toBe(true)
     await userEvent.click(screen.getByRole('button', { name: 'Place Prompt library' }))
     await waitFor(() =>
       expect(posted[0]).toEqual({
-        team_id: 1,
+        radar_id: 1,
         practice_id: 12,
         adoption: 50,
         value: 50,
@@ -94,20 +94,20 @@ describe('RadarPage (team scope)', () => {
   })
 
   it('is read-only in the past until unlocked', async () => {
-    await openTeamRadar()
+    await openRadar()
     fireEvent.change(screen.getByRole('slider', { name: 'Timeline' }), { target: { value: '0' } })
     expect(screen.getByRole('button', { name: 'Place Prompt library' })).toBeDisabled()
   })
 
   it('reports failed saves', async () => {
     server.use(http.post('/api/placements', () => HttpResponse.json({ detail: 'boom' }, { status: 500 })))
-    await openTeamRadar()
+    await openRadar()
     await userEvent.click(screen.getByRole('button', { name: 'Place Prompt library' }))
     expect(await screen.findByText(/could not save that change/i)).toBeInTheDocument()
   })
 
   it('filters bubbles by category', async () => {
-    await openTeamRadar()
+    await openRadar()
     await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Filter by category' }), 'practice')
     await waitFor(() => expect(bubble('Claude Code, Core')).toBeNull())
     expect(bubble('Spec-driven dev, Hidden gem')).not.toBeNull()
@@ -115,7 +115,7 @@ describe('RadarPage (team scope)', () => {
 })
 
 describe('RadarPage (org scope)', () => {
-  it('is read-only and shows each team in the drawer', async () => {
+  it('is read-only and shows each radar in the drawer', async () => {
     frames = framesResponse({
       scope: 'org',
       frames: [
@@ -126,10 +126,10 @@ describe('RadarPage (org scope)', () => {
               practice_id: 10,
               adoption: 60,
               value: 80,
-              teams: 2,
-              team_positions: [
-                { team_id: 1, adoption: 80, value: 90 },
-                { team_id: 2, adoption: 40, value: 70 },
+              radars: 2,
+              radar_positions: [
+                { radar_id: 1, adoption: 80, value: 90 },
+                { radar_id: 2, adoption: 40, value: 70 },
               ],
             },
           ],
@@ -144,5 +144,11 @@ describe('RadarPage (org scope)', () => {
     expect(within(drawer).getByText('Payments')).toBeInTheDocument()
     expect(within(drawer).getByText('Hidden gem')).toBeInTheDocument()
     expect(within(drawer).queryByRole('button', { name: 'Remove from radar' })).not.toBeInTheDocument()
+  })
+
+  it('shows a not-found message for an unknown radar id', async () => {
+    renderRoutes('/radar/999')
+    expect(await screen.findByText('This radar doesn’t exist.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'See all radars' })).toHaveAttribute('href', '/radars')
   })
 })

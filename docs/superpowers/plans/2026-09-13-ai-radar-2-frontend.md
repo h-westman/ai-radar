@@ -1,5 +1,8 @@
 # AI Radar Plan 2: Frontend Implementation Plan
 
+*Historical record, superseded by the Team->Radar rename of 2026-09-17. Current API paths
+live in `docs/superpowers/specs/2026-09-17-radar-rename-design.md`.*
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build the React app. It has team and org radars (a draggable, animated D3 bubble chart with tray, drawer and timeline), the practice page with inline editing and a Rich/Markdown editor, the catalog, and the teams page, all running against the Plan 1 API.

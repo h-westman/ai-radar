@@ -2,18 +2,17 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router'
 import { conflictCurrent, isConflict, validationMessage } from '../api/client'
-import { useCreateTeam, useSetTeamArchived, useTeams, useUpdateTeam } from '../api/hooks'
-import type { Team } from '../api/types'
+import { useCreateRadar, useRadars, useSetRadarArchived, useUpdateRadar } from '../api/hooks'
+import type { Radar } from '../api/types'
 import { useNamePrompt } from '../components/NamePrompt'
 import { useToast } from '../components/Toasts'
-import { toRef } from '../lib/refs'
 import styles from './Pages.module.css'
 
-export default function TeamsPage() {
+export default function RadarListPage() {
   const [showArchived, setShowArchived] = useState(false)
-  const { data: teams = [] } = useTeams(showArchived)
-  const createTeam = useCreateTeam()
-  const setArchived = useSetTeamArchived()
+  const { data: radars = [] } = useRadars(showArchived)
+  const createRadar = useCreateRadar()
+  const setArchived = useSetRadarArchived()
   const { ensureName } = useNamePrompt()
   const toast = useToast()
   const [name, setName] = useState('')
@@ -25,7 +24,7 @@ export default function TeamsPage() {
     event.preventDefault()
     await ensureName()
     try {
-      await createTeam.mutateAsync({ name, description: description.trim() || null })
+      await createRadar.mutateAsync({ name, description: description.trim() || null })
       setName('')
       setDescription('')
       setError(null)
@@ -33,41 +32,41 @@ export default function TeamsPage() {
       if (!isConflict(err)) {
         const message = validationMessage(err)
         return toast({
-          message: message ? `Could not save: ${message}` : 'Could not create the team.',
+          message: message ? `Could not save: ${message}` : 'Could not create the radar.',
           tone: 'error',
         })
       }
-      const existing = conflictCurrent<Team>(err)
+      const existing = conflictCurrent<Radar>(err)
       setError(
         existing?.archived_at
-          ? `A team named "${existing.name}" already exists but is archived. Show archived teams to restore it.`
-          : `A team named "${existing?.name ?? name}" already exists.`,
+          ? `A radar named "${existing.name}" already exists but is archived. Show archived radars to restore it.`
+          : `A radar named "${existing?.name ?? name}" already exists.`,
       )
     }
   }
 
-  async function toggleArchived(t: Team) {
+  async function toggleArchived(r: Radar) {
     await ensureName()
     try {
-      await setArchived.mutateAsync({ id: t.id, archived: t.archived_at === null })
+      await setArchived.mutateAsync({ id: r.id, archived: r.archived_at === null })
     } catch (err) {
-      toast({ message: 'Could not update the team.', tone: 'error' })
+      toast({ message: 'Could not update the radar.', tone: 'error' })
     }
   }
 
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <h1>Teams</h1>
+        <h1>Radars</h1>
         <label>
           <input type="checkbox" checked={showArchived} onChange={(e) => setShowArchived(e.target.checked)} /> Show
           archived
         </label>
       </div>
 
-      <form className={styles.card} onSubmit={onCreate} aria-label="New team">
+      <form className={styles.card} onSubmit={onCreate} aria-label="New radar">
         <label>
-          Team name
+          Radar name
           <input value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required />
         </label>
         <label>
@@ -80,31 +79,31 @@ export default function TeamsPage() {
           </p>
         )}
         <div className={styles.actions}>
-          <button type="submit" className="primary" disabled={!name.trim() || createTeam.isPending}>
-            Create team
+          <button type="submit" className="primary" disabled={!name.trim() || createRadar.isPending}>
+            Create radar
           </button>
         </div>
       </form>
 
-      <ul aria-label="Teams" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-        {teams.map((t) =>
-          editingId === t.id ? (
-            <TeamEditor key={t.id} team={t} onDone={() => setEditingId(null)} />
+      <ul aria-label="Radars" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        {radars.map((r) =>
+          editingId === r.id ? (
+            <RadarEditor key={r.id} radar={r} onDone={() => setEditingId(null)} />
           ) : (
-            <li key={t.id} className={styles.teamRow}>
+            <li key={r.id} className={styles.radarRow}>
               <div>
-                <Link to={`/radar/team/${toRef(t.id, t.slug)}`}>{t.name}</Link>
-                {t.archived_at && <span className={styles.badge}>Archived</span>}
-                {t.description && <div className={styles.muted}>{t.description}</div>}
+                <Link to={`/radar/${r.id}`}>{r.name}</Link>
+                {r.archived_at && <span className={styles.badge}>Archived</span>}
+                {r.description && <div className={styles.muted}>{r.description}</div>}
               </div>
-              <button aria-label={`Rename ${t.name}`} onClick={() => setEditingId(t.id)}>
+              <button aria-label={`Rename ${r.name}`} onClick={() => setEditingId(r.id)}>
                 Rename
               </button>
               <button
-                aria-label={`${t.archived_at ? 'Restore' : 'Archive'} ${t.name}`}
-                onClick={() => toggleArchived(t)}
+                aria-label={`${r.archived_at ? 'Restore' : 'Archive'} ${r.name}`}
+                onClick={() => toggleArchived(r)}
               >
-                {t.archived_at ? 'Restore' : 'Archive'}
+                {r.archived_at ? 'Restore' : 'Archive'}
               </button>
             </li>
           ),
@@ -114,42 +113,42 @@ export default function TeamsPage() {
   )
 }
 
-function TeamEditor({ team, onDone }: { team: Team; onDone: () => void }) {
-  const updateTeam = useUpdateTeam()
+function RadarEditor({ radar, onDone }: { radar: Radar; onDone: () => void }) {
+  const updateRadar = useUpdateRadar()
   const queryClient = useQueryClient()
   const { ensureName } = useNamePrompt()
   const toast = useToast()
-  const [name, setName] = useState(team.name)
-  const [description, setDescription] = useState(team.description ?? '')
+  const [name, setName] = useState(radar.name)
+  const [description, setDescription] = useState(radar.description ?? '')
   const [error, setError] = useState<string | null>(null)
 
   async function onSave(event: FormEvent) {
     event.preventDefault()
     await ensureName()
     try {
-      await updateTeam.mutateAsync({
-        id: team.id,
-        body: { version: team.version, name, description: description.trim() || null },
+      await updateRadar.mutateAsync({
+        id: radar.id,
+        body: { version: radar.version, name, description: description.trim() || null },
       })
       onDone()
     } catch (err) {
       if (isConflict(err)) {
-        setError('That name is taken, or someone else changed this team. Reload and try again.')
+        setError('That name is taken, or someone else changed this radar. Reload and try again.')
         // Refresh the list so the row's version updates and a retry can succeed.
-        await queryClient.invalidateQueries({ queryKey: ['teams'] })
+        await queryClient.invalidateQueries({ queryKey: ['radars'] })
       } else {
         const message = validationMessage(err)
-        toast({ message: message ? `Could not save: ${message}` : 'Could not save the team.', tone: 'error' })
+        toast({ message: message ? `Could not save: ${message}` : 'Could not save the radar.', tone: 'error' })
       }
     }
   }
 
   return (
-    <li className={styles.teamRow}>
+    <li className={styles.radarRow}>
       <form onSubmit={onSave} style={{ display: 'flex', gap: 8, flex: 1, flexWrap: 'wrap' }}>
-        <input aria-label={`New name for ${team.name}`} value={name} onChange={(e) => setName(e.target.value)} />
+        <input aria-label={`New name for ${radar.name}`} value={name} onChange={(e) => setName(e.target.value)} />
         <input
-          aria-label={`Description for ${team.name}`}
+          aria-label={`Description for ${radar.name}`}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />

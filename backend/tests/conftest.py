@@ -18,7 +18,6 @@ from sqlalchemy import Engine, create_engine  # noqa: E402
 from sqlalchemy.orm import Session  # noqa: E402
 
 from app.db import get_session  # noqa: E402
-from app.main import create_app  # noqa: E402
 
 
 @pytest.fixture(scope="session")
@@ -47,6 +46,11 @@ def session(engine: Engine) -> Iterator[Session]:
 
 @pytest.fixture
 def app(session: Session) -> FastAPI:
+    # Imported lazily: app.main pulls in every router, so tests that only need
+    # the `session` fixture (not `app`/`client`) aren't forced to import and
+    # pay for the whole route/model graph.
+    from app.main import create_app
+
     application = create_app()
     application.dependency_overrides[get_session] = lambda: session
     return application

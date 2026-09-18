@@ -7,7 +7,7 @@ from app.config import settings
 from app.deps import stash_session
 from app.errors import ConflictError, conflict_handler, integrity_error_handler
 from app.middleware import BodySizeLimitMiddleware, WriteRateLimitMiddleware
-from app.routers import health, notes, placements, practices, radar, revisions, teams
+from app.routers import frames, health, notes, placements, practices, radars, revisions
 from app.spa import mount_spa
 
 DEFAULT_STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -24,12 +24,12 @@ def create_app(
     app.add_exception_handler(IntegrityError, integrity_error_handler)
     for router in (
         health.router,
-        teams.router,
+        radars.router,
         practices.router,
         notes.router,
         placements.router,
         revisions.router,
-        radar.router,
+        frames.router,
     ):
         app.include_router(router, prefix="/api")
     if rate_limit:

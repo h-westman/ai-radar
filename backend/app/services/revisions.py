@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.models import Practice, Revision, Team, TeamNote
-from app.schemas import NoteOut, PracticeOut, TeamOut
+from app.models import Practice, Radar, RadarNote, Revision
+from app.schemas import NoteOut, PracticeOut, RadarOut
 
 _REGISTRY: dict[type, tuple[str, type[BaseModel]]] = {}
 
@@ -11,14 +11,14 @@ def register(model_cls: type, entity_type: str, schema_cls: type[BaseModel]) -> 
     _REGISTRY[model_cls] = (entity_type, schema_cls)
 
 
-register(Team, "team", TeamOut)
+register(Radar, "radar", RadarOut)
 register(Practice, "practice", PracticeOut)
-register(TeamNote, "team_note", NoteOut)
+register(RadarNote, "radar_note", NoteOut)
 
 
 def entity_id_of(entity: object) -> str:
-    if isinstance(entity, TeamNote):
-        return f"{entity.team_id}:{entity.practice_id}"
+    if isinstance(entity, RadarNote):
+        return f"{entity.radar_id}:{entity.practice_id}"
     return str(entity.id)  # type: ignore[attr-defined]
 
 
@@ -43,7 +43,7 @@ def record_revision(
 
 
 EDITABLE_FIELDS: dict[str, tuple[str, ...]] = {
-    "team": ("name", "description"),
+    "radar": ("name", "description"),
     "practice": ("name", "category", "summary", "body_md", "tags", "links"),
-    "team_note": ("body_md",),
+    "radar_note": ("body_md",),
 }

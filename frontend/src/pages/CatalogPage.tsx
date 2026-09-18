@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import { usePractices } from '../api/hooks'
 import { CATEGORIES, type Category } from '../api/types'
 import CategoryChip from '../components/CategoryChip'
-import { toRef } from '../lib/refs'
+import { categoryLabel } from '../lib/categories'
 import { useDebounced } from '../lib/useDebounced'
 import NewPracticeForm from './NewPracticeForm'
 import styles from './Pages.module.css'
@@ -38,7 +38,7 @@ export default function CatalogPage() {
           <option value="">All categories</option>
           {CATEGORIES.map((c) => (
             <option key={c} value={c}>
-              {c[0].toUpperCase() + c.slice(1)}
+              {categoryLabel(c)}
             </option>
           ))}
         </select>
@@ -54,14 +54,14 @@ export default function CatalogPage() {
             <th>Name</th>
             <th>Category</th>
             <th>Tags</th>
-            <th>Teams</th>
+            <th>Radars</th>
           </tr>
         </thead>
         <tbody>
           {practices.map((p) => (
             <tr key={p.id}>
               <td>
-                <Link to={`/practices/${toRef(p.id, p.slug)}`}>{p.name}</Link>
+                <Link to={`/practices/${p.id}`}>{p.name}</Link>
                 {p.archived_at && <span className={styles.badge}>Archived</span>}
                 <div className={styles.muted}>{p.summary}</div>
               </td>
@@ -75,7 +75,7 @@ export default function CatalogPage() {
                   </button>
                 ))}
               </td>
-              <td aria-label={`${p.teams_count} teams`}>{p.teams_count}</td>
+              <td aria-label={`${p.radars_count} radars`}>{p.radars_count}</td>
             </tr>
           ))}
         </tbody>

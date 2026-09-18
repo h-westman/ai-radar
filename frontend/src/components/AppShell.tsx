@@ -1,36 +1,30 @@
 import { Link, NavLink, Outlet, useMatch, useNavigate } from 'react-router'
-import { useTeams } from '../api/hooks'
+import { useRadars } from '../api/hooks'
 import { getEditedBy } from '../lib/editedBy'
-import { idFromRef, toRef } from '../lib/refs'
+import { parseId } from '../lib/ids'
 import { writeString } from '../lib/storage'
 import styles from './AppShell.module.css'
 import { useNamePrompt } from './NamePrompt'
 
-export const LAST_TEAM_KEY = 'aiRadar.lastTeam'
+export const LAST_RADAR_KEY = 'aiRadar.lastRadar'
 
 export default function AppShell() {
   const navigate = useNavigate()
-  const teamMatch = useMatch('/radar/team/:teamRef')
+  const radarMatch = useMatch('/radar/:radarId')
   const orgMatch = useMatch('/radar/org')
-  const { data: teams = [] } = useTeams()
+  const { data: radars = [] } = useRadars()
   const { changeName } = useNamePrompt()
   const name = getEditedBy()
 
-  const teamRef = teamMatch?.params.teamRef
-  const teamId = teamRef ? idFromRef(teamRef) : null
-  const matchedTeam = teamId !== null ? teams.find((t) => t.id === teamId) : undefined
-  const current = teamRef
-    ? (matchedTeam ? toRef(matchedTeam.id, matchedTeam.slug) : teamRef)
-    : orgMatch
-      ? 'org'
-      : ''
+  const radarId = radarMatch ? parseId(radarMatch.params.radarId) : null
+  const current = radarId !== null ? String(radarId) : orgMatch ? 'org' : ''
 
   function onScopeChange(value: string) {
     if (value === 'org') {
       navigate('/radar/org')
     } else {
-      writeString(LAST_TEAM_KEY, value)
-      navigate(`/radar/team/${value}`)
+      writeString(LAST_RADAR_KEY, value)
+      navigate(`/radar/${value}`)
     }
   }
 
@@ -45,16 +39,16 @@ export default function AppShell() {
           <select aria-label="Radar" value={current} onChange={(e) => onScopeChange(e.target.value)}>
             {current === '' && <option value="">Choose a radar…</option>}
             <option value="org">Whole organization</option>
-            {teams.map((t) => (
-              <option key={t.id} value={toRef(t.id, t.slug)}>
-                {t.name}
+            {radars.map((r) => (
+              <option key={r.id} value={String(r.id)}>
+                {r.name}
               </option>
             ))}
           </select>
         </label>
         <nav className={styles.nav}>
           <NavLink to="/practices">Catalog</NavLink>
-          <NavLink to="/teams">Teams</NavLink>
+          <NavLink to="/radars">Radars</NavLink>
         </nav>
         <button className={styles.nameChip} onClick={changeName} title="Change your name">
           ✎ {name ? name : 'anonymous'}

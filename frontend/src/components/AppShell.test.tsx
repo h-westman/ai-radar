@@ -3,15 +3,15 @@ import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { writeString } from '../lib/storage'
-import { team } from '../test/fixtures'
+import { radar } from '../test/fixtures'
 import { renderRoutes } from '../test/render'
 import { server } from '../test/server'
-import { LAST_TEAM_KEY } from './AppShell'
+import { LAST_RADAR_KEY } from './AppShell'
 
 beforeEach(() => {
   server.use(
-    http.get('/api/teams', () =>
-      HttpResponse.json([team(), team({ id: 2, name: 'Payments', slug: 'payments' })]),
+    http.get('/api/radars', () =>
+      HttpResponse.json([radar({ id: 1, name: 'Platform' }), radar({ id: 2, name: 'Payments' })]),
     ),
   )
 })
@@ -22,28 +22,36 @@ describe('app shell', () => {
     await waitFor(() => expect(router.state.location.pathname).toBe('/radar/org'))
   })
 
-  it('redirects home to the last team', async () => {
-    writeString(LAST_TEAM_KEY, '2-payments')
+  it('redirects home to the last radar', async () => {
+    writeString(LAST_RADAR_KEY, '2')
     const { router } = renderRoutes('/')
-    await waitFor(() => expect(router.state.location.pathname).toBe('/radar/team/2-payments'))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/radar/2'))
   })
 
-  it('switches scope and remembers the team', async () => {
+  it('navigates to a bare-id radar url', async () => {
+    const { router } = renderRoutes('/radar/org')
+    const select = await screen.findByRole('combobox', { name: 'Radar' })
+    await screen.findByRole('option', { name: 'Platform' })
+    await userEvent.selectOptions(select, '1')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/radar/1'))
+  })
+
+  it('switches scope and remembers the radar', async () => {
     const { router } = renderRoutes('/radar/org')
     const select = await screen.findByRole('combobox', { name: 'Radar' })
     await screen.findByRole('option', { name: 'Payments' })
-    await userEvent.selectOptions(select, '2-payments')
-    expect(router.state.location.pathname).toBe('/radar/team/2-payments')
-    expect(localStorage.getItem(LAST_TEAM_KEY)).toBe('2-payments')
+    await userEvent.selectOptions(select, '2')
+    expect(router.state.location.pathname).toBe('/radar/2')
+    expect(localStorage.getItem(LAST_RADAR_KEY)).toBe('2')
     await userEvent.selectOptions(select, 'org')
     expect(router.state.location.pathname).toBe('/radar/org')
   })
 
-  it('shows the current team option even after its slug is stale in the URL', async () => {
-    renderRoutes('/radar/team/1-old-slug')
+  it('shows the current radar selected when navigating directly by id', async () => {
+    renderRoutes('/radar/1')
     const select = await screen.findByRole('combobox', { name: 'Radar' })
     await screen.findByRole('option', { name: 'Platform' })
-    await waitFor(() => expect(select).toHaveValue('1-platform'))
+    await waitFor(() => expect(select).toHaveValue('1'))
   })
 
   it('shows the name chip and lets you change it', async () => {
